@@ -1,20 +1,20 @@
 ---
 name: canvas-post
-description: Post or update content in the user's Canvas courses (assignments, pages, announcements, modules, due dates, file uploads) through the canvas-export CLI, making sure it goes to the CORRECT course. Use whenever the user asks to post, push, publish, upload, create, or edit anything in Canvas, or names one of their courses together with Canvas.
+description: Post or update content in the user's Canvas courses (assignments, pages, announcements, modules, due dates, file uploads) through the canvas-harness CLI, making sure it goes to the CORRECT course. Use whenever the user asks to post, push, publish, upload, create, or edit anything in Canvas, or names one of their courses together with Canvas.
 ---
 
 # canvas-post
 
-Everything personal lives in the repo's gitignored `local/` folder:
+Everything personal is gitignored: the secrets file at the repo root, and the `local/` folder.
 
 | file | what it is | who writes it |
 |---|---|---|
 | `local/courses.json` | aliases, Canvas ids, exact titles, project folders | `/setup` (Claude) |
 | `local/profile.json` | timezone, PDF naming, default upload folder | `/setup` (Claude) |
 | `local/canvas-config.json` | `auto_approve`, `auto_preview`, `auto_publish` | **the user only** |
-| secrets file in `local/` | school URL, token, allowed course ids | **the user only**, with `bin/+a` |
+| `.env` at the repo root | school URL, token, allowed course ids | **the user only** |
 
-The command is `bin/canvas-export` from the repo root (or `canvas-export` if
+The command is `bin/canvas-harness` from the repo root (or `canvas-harness` if
 `/setup` put it on PATH). If `local/courses.json` is missing, stop and suggest `/setup`.
 
 ## Never
@@ -28,7 +28,7 @@ The command is `bin/canvas-export` from the repo root (or `canvas-export` if
 
 ## Procedure
 
-1. **Verify the roster.** Run `canvas-export roster`. It must exit 0. On a
+1. **Verify the roster.** Run `canvas-harness roster`. It must exit 0. On a
    MISMATCH or missing alias, stop and tell the user.
 2. **Pick the course.** Read `local/courses.json`.
    - If the user names a course and it clearly matches one alias, use it. If two
@@ -37,17 +37,17 @@ The command is `bin/canvas-export` from the repo root (or `canvas-export` if
    - Otherwise, ask. Handle several courses one at a time and say which is which.
 3. **Write a plan** at `local/plans/<alias>/<YYYY-MM-DD>-<slug>/plan.json`.
    Keep long HTML in a sibling file referenced from `files`. The format is in
-   the `canvas_export/plan.py` docstring and `examples/plan-basic/`.
-   Read-only lookups (for example, finding a module id) can use `canvas-export get`.
-4. **Preview.** Run `canvas-export preview <plan>`. Relay the summary, every
+   the `canvas_harness/plan.py` docstring and `examples/plan-basic/`.
+   Read-only lookups (for example, finding a module id) can use `canvas-harness get`.
+4. **Preview.** Run `canvas-harness preview <plan>`. Relay the summary, every
    `!` warning and the `approval:` line, and give the preview file path.
 5. **Approval.**
    - `approval: AUTO` means the user turned on auto_approve and nothing is
      flagged. Continue to step 6.
-   - Otherwise, ask the user to run `bin/canvas-export approve <plan>` in their
+   - Otherwise, ask the user to run `bin/canvas-harness approve <plan>` in their
      own terminal (it needs a real terminal). You cannot approve for them.
    - Any edit to the plan or its files cancels approval. Preview again.
-6. **Apply.** Run `canvas-export apply <plan>`. A plan runs once. If a step
+6. **Apply.** Run `canvas-harness apply <plan>`. A plan runs once. If a step
    fails, `<plan>.result.json` records what was sent. Tell the user and make a
    new plan for the remaining steps. Never re-run the old one.
 7. **Verify.** GET each created or updated item back and report its `html_url`
@@ -69,9 +69,9 @@ The command is `bin/canvas-export` from the repo root (or `canvas-export` if
 
 ## Files and PDFs
 
-- Uploads come from `local/uploads/<alias>/`. Run `canvas-export uploads` to
+- Uploads come from `local/uploads/<alias>/`. Run `canvas-harness uploads` to
   see what's waiting. A file there can only go to that course.
-- To render course HTML to PDF: `canvas-export pdf <file.html> --course @<alias> --pages <N>`.
+- To render course HTML to PDF: `canvas-harness pdf <file.html> --course @<alias> --pages <N>`.
   The course comes from which `local_project` folder holds the file. If it
   refuses, report why and stop. Ask before passing `--overwrite`.
 - Upload step: `{"course": "@alias", "upload": "<file>", "folder": "Assignments/<name>"}`.

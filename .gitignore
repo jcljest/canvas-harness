@@ -1,4 +1,7 @@
 # Everything personal: secrets, profile, roster, switches, plans, uploads
+/.env
+/.env.*
+!/.env.example
 /local/
 
 __pycache__/

@@ -2,8 +2,8 @@
 """PreToolUse guard: Claude must not change the files that decide what gets approved.
 
 - canvas-config.json: auto_approve / auto_publish switches. Only the user edits it.
-- *.approved: approval stamps. Only `canvas-export approve` (typed by the user)
-  or an auto-approval inside `canvas-export apply` writes them.
+- *.approved: approval stamps. Only `canvas-harness approve` (typed by the user)
+  or an auto-approval inside `canvas-harness apply` writes them.
 
 File-editing tools are also blocked by permissions.deny in settings.json. For
 Bash, read-only commands (cat, head, ls, stat, wc, git diff/log/show/status)
@@ -19,7 +19,7 @@ PROTECTED = re.compile(r"canvas-config\.json|\.approved\b")
 READ_ONLY = re.compile(r"^\s*(cat|head|tail|less|ls|stat|wc|git\s+(diff|log|show|status))\b[^;&|<>`$()]*$")
 EDIT_TOOLS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
 MESSAGE = ("{name} is user-only: it decides what gets approved and published. "
-           "Ask the user to change it themselves; read switches with `bin/canvas-export config`.")
+           "Ask the user to change it themselves; read switches with `bin/canvas-harness config`.")
 
 
 def decide(event):

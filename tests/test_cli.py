@@ -13,10 +13,11 @@ from unittest import mock
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from canvas_export import cli as lc  # noqa: E402
+from canvas_harness import cli as lc  # noqa: E402
 
 # Never touch a real local/ folder in tests.
-os.environ["CANVAS_EXPORT_LOCAL"] = tempfile.mkdtemp()
+os.environ["CANVAS_HARNESS_LOCAL"] = tempfile.mkdtemp()
+os.environ["CANVAS_HARNESS_ENV"] = os.path.join(os.environ["CANVAS_HARNESS_LOCAL"], "secrets")
 
 TOKEN = "fake~token~1234567890"
 CFG = {"base": "https://school.instructure.com", "token": TOKEN, "course_ids": {"111", "222"}}
@@ -132,20 +133,21 @@ class Roster(unittest.TestCase):
 
 class Setup(unittest.TestCase):
     def test_templates_load(self):
-        from canvas_export import settings as st
+        from canvas_harness import settings as st
         self.assertEqual(st.load_switches(REPO / "templates" / "canvas-config.example.json"), st.DEFAULT_SWITCHES)
         self.assertEqual(st.load_profile(REPO / "templates" / "profile.example.json")["timezone"], "America/Chicago")
 
     def test_missing_local_gives_setup_hint(self):
         empty = tempfile.mkdtemp()
         err = io.StringIO()
-        with mock.patch.dict(os.environ, {"CANVAS_EXPORT_LOCAL": empty}), redirect_stderr(err), redirect_stdout(io.StringIO()):
+        env = {"CANVAS_HARNESS_LOCAL": empty, "CANVAS_HARNESS_ENV": os.path.join(empty, "none")}
+        with mock.patch.dict(os.environ, env), redirect_stderr(err), redirect_stdout(io.StringIO()):
             rc = lc.main(["check"])
         self.assertEqual(rc, 2)
         self.assertIn("/setup", err.getvalue())
 
     def test_bad_local_files_give_setup_hint(self):
-        from canvas_export import settings as st
+        from canvas_harness import settings as st
         d = Path(tempfile.mkdtemp())
         (d / "courses.json").write_text("[1, 2]")
         (d / "profile.json").write_text('{"timezone": "Mars/Base"}')
@@ -154,7 +156,7 @@ class Setup(unittest.TestCase):
         with self.assertRaises(st.SetupError):
             st.load_profile(d / "profile.json")
         err = io.StringIO()
-        with mock.patch.dict(os.environ, {"CANVAS_EXPORT_LOCAL": str(d)}), redirect_stderr(err):
+        with mock.patch.dict(os.environ, {"CANVAS_HARNESS_LOCAL": str(d)}), redirect_stderr(err):
             rc = lc.main(["uploads"])
         self.assertEqual(rc, 2)
         self.assertIn("/setup", err.getvalue())
@@ -228,7 +230,7 @@ class PlusA(unittest.TestCase):
         import pty
         pid, fd = pty.fork()
         if pid == 0:
-            os.environ["CANVAS_EXPORT_LOCAL"] = os.path.dirname(secrets)
+            os.environ["CANVAS_HARNESS_ENV"] = secrets
             os.execv("/bin/bash", ["bash", str(REPO / "bin" / "+a"), *args])
         out = b""
         for a in answers:
@@ -255,7 +257,7 @@ class PlusA(unittest.TestCase):
         self.assertEqual(lc.parse_secrets(Path(secrets).read_text()), {"KEEP": "1", "CANVAS_API_TOKEN": "s3cr3t-value"})
         self.assertEqual(stat.S_IMODE(os.stat(secrets).st_mode), 0o600)
 
-        listing = subprocess.run(["bash", str(REPO / "bin" / "+a"), "-l"], env={**os.environ, "CANVAS_EXPORT_LOCAL": d},
+        listing = subprocess.run(["bash", str(REPO / "bin" / "+a"), "-l"], env={**os.environ, "CANVAS_HARNESS_ENV": secrets},
                                  capture_output=True, text=True)
         self.assertIn("CANVAS_API_TOKEN", listing.stdout)
         self.assertNotIn("s3cr3t-value", listing.stdout)
@@ -263,7 +265,7 @@ class PlusA(unittest.TestCase):
     def test_rejects_name_equals_value(self):
         d = tempfile.mkdtemp()
         r = subprocess.run(["bash", str(REPO / "bin" / "+a"), "A=b"],
-                           env={**os.environ, "CANVAS_EXPORT_LOCAL": d}, capture_output=True, text=True)
+                           env={**os.environ, "CANVAS_HARNESS_ENV": os.path.join(d, "s")}, capture_output=True, text=True)
         self.assertEqual(r.returncode, 2)
 
 

@@ -23,7 +23,7 @@ from pathlib import Path
 from . import settings as st
 from .settings import SetupError, load_roster
 
-PROG = "canvas-export"
+PROG = "canvas-harness"
 SETUP_HINT = "First time? Open this repo in Claude Code and type /setup."
 REQUIRED = ("CANVAS_BASE_URL", "CANVAS_API_TOKEN", "CANVAS_COURSE_IDS")
 WRITE_METHODS = {"POST", "PUT", "DELETE"}
@@ -219,7 +219,7 @@ FILE_CONFIRM = re.compile(r"^/api/v1/files/\d+(/create_success)?$")
 
 
 def _multipart(fields, filename, content, ctype):
-    boundary = "----canvasexport" + os.urandom(12).hex()
+    boundary = "----canvasharness" + os.urandom(12).hex()
     safe_name = filename.replace('"', "%22").replace("\r", "").replace("\n", "")
     out = []
     for key, value in fields:
@@ -335,10 +335,10 @@ def _plan_command(args):
         print(json.dumps(log, indent=2))
         return 0
     except (plans.PlanError, ConfigError, ScopeError, SetupError) as e:
-        print(f"canvas-export: {e}", file=sys.stderr)
+        print(f"canvas-harness: {e}", file=sys.stderr)
         return 2
     except RuntimeError as e:
-        print(f"canvas-export: {e}", file=sys.stderr)
+        print(f"canvas-harness: {e}", file=sys.stderr)
         print("Stopped. Completed steps are recorded in the .result.json file next to the plan.", file=sys.stderr)
         return 1
 
@@ -353,7 +353,7 @@ def main(argv=None):
 
 def _main(argv=None):
     ap = argparse.ArgumentParser(prog=PROG, description="Course-scoped Canvas API client.")
-    ap.add_argument("--env-file", help="secrets file (default: local/ in this repo, or $CANVAS_EXPORT_LOCAL)")
+    ap.add_argument("--env-file", help="secrets file (default: local/ in this repo, or $CANVAS_HARNESS_LOCAL)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check", help="validate config and connectivity (never prints the token)")
     sub.add_parser("whoami", help="GET users/self")
@@ -366,7 +366,9 @@ def _main(argv=None):
     pv.add_argument("plan")
     pv.add_argument("--no-open", action="store_true", help="don't open the preview in a browser")
     pv.add_argument("--open", action="store_true", help="open the preview even if auto_preview is false")
-    sub.add_parser("config", help="show canvas-config.json switches (auto_approve, auto_preview); only you edit that file")
+    sub.add_parser("config", help="show your switches (auto_approve, auto_preview, auto_publish); only you edit that file")
+    sub.add_parser("doctor", help="checklist of what is set up and what to do next (never prints secrets)").add_argument(
+        "--offline", action="store_true", help="skip the connection test")
     sub.add_parser("approve", help="YOU approve a previewed plan (needs a terminal)").add_argument("plan")
     sub.add_parser("apply", help="send an approved plan to Canvas").add_argument("plan")
     sub.add_parser("uploads", help="list files waiting in each course's landing folder (uploads/<alias>/)")
@@ -423,9 +425,12 @@ def _main(argv=None):
                                             pages=args.pages, overwrite=args.overwrite)
                 print(f"@{dest.parent.name}  {dest.name}  {n} page{'s' * (n != 1)}  ({dest})")
         except pdfs.PdfError as e:
-            print(f"canvas-export pdf: {e}", file=sys.stderr)
+            print(f"canvas-harness pdf: {e}", file=sys.stderr)
             return 2
         return 0
+    if args.cmd == "doctor":
+        from . import doctor
+        return doctor.run(offline=args.offline)
     if args.cmd == "config":
         settings = st.load_switches()
         cfg_path = st.config_path()
@@ -453,7 +458,7 @@ def _main(argv=None):
                     failed = True
                     print(f"course: {cid}  NOT ACCESSIBLE ({str(e).splitlines()[0]})")
             if failed:
-                print("Run `canvas-export discover` to list your real course ids.")
+                print("Run `canvas-harness discover` to list your real course ids.")
             return 1 if failed else 0
         if args.cmd == "discover":
             query = [("per_page", "100"), ("include[]", "term"),
@@ -505,7 +510,7 @@ def _main(argv=None):
                     out.append({k: c.get(k) for k in ("id", "course_code", "name", "workflow_state")})
                 except RuntimeError as e:
                     out.append({"id": int(cid), "error": str(e).splitlines()[0],
-                                "hint": "run `canvas-export discover` to find your course ids"})
+                                "hint": "run `canvas-harness discover` to find your course ids"})
         else:
             method = args.cmd.upper()
             args.path = expand_alias(args.path, load_roster())
@@ -523,10 +528,10 @@ def _main(argv=None):
                 dry_run=getattr(args, "dry_run", False),
             )
     except (ConfigError, ScopeError) as e:
-        print(f"canvas-export: {e}", file=sys.stderr)
+        print(f"canvas-harness: {e}", file=sys.stderr)
         return 2
     except RuntimeError as e:
-        print(f"canvas-export: {e}", file=sys.stderr)
+        print(f"canvas-harness: {e}", file=sys.stderr)
         return 1
     print(json.dumps(out, indent=2, ensure_ascii=False))
     return 0

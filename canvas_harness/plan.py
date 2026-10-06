@@ -262,11 +262,11 @@ def blocking_warnings(plan):
 
 def approval_line(plan, settings):
     if not settings["auto_approve"]:
-        return "approval: you type `canvas-export approve <plan>` (auto_approve is off)"
+        return "approval: you type `canvas-harness approve <plan>` (auto_approve is off)"
     blocking = blocking_warnings(plan)
     if not blocking:
         return "approval: AUTO (auto_approve is on and nothing is flagged); `apply` will send it"
-    return "approval: you type `canvas-export approve <plan>` (auto_approve is on, but flagged: " + "; ".join(blocking) + ")"
+    return "approval: you type `canvas-harness approve <plan>` (auto_approve is on, but flagged: " + "; ".join(blocking) + ")"
 
 
 def _fmt(key, value):
@@ -374,7 +374,7 @@ code {{ font-size:13px; }}
 <h1>{e(plan['title'])}</h1>
 <div class="meta">{len(plan['steps'])} step(s) · plan sha256 {digest[:12]} · generated {datetime.now().strftime('%b %-d %-I:%M %p')}</div>
 {''.join(cards)}
-<p class="next">Nothing has been sent yet. {e(approval) if approval else 'If this looks right, run <code>canvas-export approve &lt;plan&gt;</code> in your terminal.'}</p>
+<p class="next">Nothing has been sent yet. {e(approval) if approval else 'If this looks right, run <code>canvas-harness approve &lt;plan&gt;</code> in your terminal.'}</p>
 </main></body></html>"""
 
 
@@ -433,13 +433,13 @@ def apply(plan_path, roster, send, describe=print, upload=None, uploads_root=Non
         blocking = blocking_warnings(plan)
         if blocking:
             raise PlanError("auto_approve is on, but this plan is flagged, so you must run "
-                            "`canvas-export approve` yourself:\n  " + "\n  ".join(blocking))
+                            "`canvas-harness approve` yourself:\n  " + "\n  ".join(blocking))
         stamp = {"digest": digest, "approved_at": datetime.now(timezone.utc).isoformat(),
                  "approved_by": "auto (canvas-config.json)", "applied_at": None}
         stamp_path(plan_path).write_text(json.dumps(stamp, indent=2) + "\n")
         describe(f"auto-approved {digest[:12]} (canvas-config.json: auto_approve is on, nothing flagged)")
     if not stamp:
-        raise PlanError("plan is not approved; run `canvas-export preview` then `canvas-export approve`")
+        raise PlanError("plan is not approved; run `canvas-harness preview` then `canvas-harness approve`")
     if stamp.get("digest") != digest:
         raise PlanError("plan (or a file it uses) changed since approval; preview and approve again")
     if stamp.get("applied_at"):

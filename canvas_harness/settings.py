@@ -1,9 +1,9 @@
 """Where each user's files live, and how their profile and switches are read.
 
-Everything personal sits in one gitignored folder, `local/` in the repo
-(override with $CANVAS_EXPORT_LOCAL):
+Secrets live in `.env` at the repo root (copied from `.env.example` and
+filled in by the user; override with $CANVAS_HARNESS_ENV). Everything else
+personal sits in one gitignored folder, `local/` (override with $CANVAS_HARNESS_LOCAL):
 
-    local/.env                 secrets, written only by the user with `bin/+a`
     local/profile.json         timezone, naming conventions (written by /setup)
     local/courses.json         course roster: alias -> id, exact title, project folder
     local/canvas-config.json   switches; only the user edits this file
@@ -19,7 +19,6 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
-SECRETS_NAME = ".env"
 DEFAULT_SWITCHES = {"auto_approve": False, "auto_preview": True, "auto_publish": False}
 DEFAULT_PROFILE = {
     "timezone": None,                 # IANA name, e.g. "America/Chicago"; enables date-offset checks
@@ -35,11 +34,11 @@ class SetupError(Exception):
 
 
 def local_dir():
-    return Path(os.environ.get("CANVAS_EXPORT_LOCAL") or REPO / "local").expanduser()
+    return Path(os.environ.get("CANVAS_HARNESS_LOCAL") or REPO / "local").expanduser()
 
 
 def secrets_path():
-    return local_dir() / SECRETS_NAME
+    return Path(os.environ.get("CANVAS_HARNESS_ENV") or REPO / ".env").expanduser()
 
 
 def profile_path():

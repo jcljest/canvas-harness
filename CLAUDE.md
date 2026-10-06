@@ -1,14 +1,17 @@
-# canvas-export: notes for Claude
+# canvas-harness: notes for Claude
 
 - If `local/courses.json` doesn't exist, the user hasn't set up yet. Suggest `/setup`.
-- Talk to Canvas only through `bin/canvas-export`. For any posting or editing,
+  `bin/canvas-harness doctor` shows what's done and what's next.
+- **Deleting:** the delete guard asks the user before any delete. Don't try to
+  work around it (no `mv` to the trash, no truncating files instead).
+- Talk to Canvas only through `bin/canvas-harness`. For any posting or editing,
   follow the `canvas-post` skill and address courses by alias (`@name`) from
   `local/courses.json`.
-- **Secrets:** never read, search, print or source the secrets file in `local/`,
-  and never print environment variables. If a variable is missing, ask the user
+- **Secrets:** never read, search, print or source `.env` (repo root), and never
+  print environment variables. `.env.example` is the readable template. If a variable is missing, ask the user
   to run `bin/+a NAME` in their own terminal.
 - **User-only files:** never create, edit or work around `local/canvas-config.json`
-  or any `*.approved` file. Read switches with `bin/canvas-export config`.
+  or any `*.approved` file. Read switches with `bin/canvas-harness config`.
 - **Approval:** `approve` is typed by the user in their own terminal. Never
   approve on their behalf. If their `auto_approve` is on, `apply` approves
   unflagged plans itself.

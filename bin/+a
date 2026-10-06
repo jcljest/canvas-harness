@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# +a — add or replace a variable in your canvas-export secrets file without
+# +a — add or replace a variable in your canvas-harness secrets file without
 # the value ever appearing on screen, in shell history, or on argv.
 #
 #   +a NAME        prompt (hidden) for NAME's value and save it
@@ -7,7 +7,7 @@
 #   +a -l          list saved variable NAMES (never values)
 #   +a -d NAME     remove NAME
 #
-# File: <local>/.env, where <local> is $CANVAS_EXPORT_LOCAL or local/ in this repo.
+# File: $CANVAS_HARNESS_ENV, else .env at the repo root.
 set -euo pipefail
 umask 077
 
@@ -19,9 +19,7 @@ while [ -L "$src" ]; do
   case "$src" in /*) ;; *) src="$dir/$src" ;; esac
 done
 repo="$(cd -P "$(dirname "$src")/.." && pwd)"
-localdir="${CANVAS_EXPORT_LOCAL:-$repo/local}"
-mkdir -p "$localdir"
-file="$localdir/.env"
+file="${CANVAS_HARNESS_ENV:-$repo/.env}"
 
 valid_name() { [[ "$1" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; }
 

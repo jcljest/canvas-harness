@@ -28,7 +28,7 @@ class GuardApprovals(unittest.TestCase):
                     "python3 -c 'open(\"p.approved\",\"w\")'"]:
             self.assertEqual(run("Bash", {"command": cmd}), "deny", cmd)
         for cmd in ["cat local/canvas-config.json", "ls local/plans/a/plan.json.approved",
-                    "bin/canvas-export config", "bin/canvas-export apply local/plans/a/plan.json"]:
+                    "bin/canvas-harness config", "bin/canvas-harness apply local/plans/a/plan.json"]:
             self.assertEqual(run("Bash", {"command": cmd}), "allow", cmd)
 
     def test_bad_input_fails_closed(self):

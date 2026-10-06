@@ -1,4 +1,4 @@
-# canvas-export
+# canvas-harness
 
 Let Claude Code post to your Canvas courses safely. You review a preview of
 every change before it is sent, and Claude never sees your API token.
@@ -8,12 +8,18 @@ every change before it is sent, and Claude never sees your API token.
 1. Clone this repo and open the folder in Claude Code. When Claude Code asks
    whether to trust the project's settings, say yes. That turns on the safety
    hooks (see [Safety](#safety)).
-2. Type `/setup`. Claude asks a few questions and writes your personal files
-   into `local/`. You type your Canvas token yourself, in your own terminal.
+2. In your own terminal: `cp .env.example .env && chmod 600 .env`. Open `.env`
+   in your editor and fill in `CANVAS_BASE_URL` and `CANVAS_API_TOKEN`
+   (Canvas → Account → Settings → **+ New Access Token**). Never paste the token
+   into a chat.
+3. In Claude Code, type `/setup`. Claude checks your connection, lists your
+   courses from Canvas, asks which to use and what to call them, and writes
+   your settings. It then tells you which course ids to add to `.env` as
+   `CANVAS_COURSE_IDS`. That list is the hard limit on what the tool can
+   change, so only you edit it.
 
-> `/setup` is still being built. Until then, copy the files in `templates/`
-> into `local/` (drop `.example` from each name), edit them, and add your
-> secrets with `bin/+a`, as shown below.
+You can check progress at any time with `bin/canvas-harness doctor`. Run
+`/setup` again later to add a course or start a new school year.
 
 ## How posting works
 
@@ -22,28 +28,30 @@ plan.json  ->  preview  ->  approve (you)  ->  apply  ->  verify
 ```
 
 - **plan**: a JSON file that says exactly what to send (see `examples/plan-basic/`).
-- **preview**: `bin/canvas-export preview <plan>` writes an HTML page showing
+- **preview**: `bin/canvas-harness preview <plan>` writes an HTML page showing
   each item as students will see it, with warnings for anything risky:
   deletes, past dates, wrong timezone offsets, answer-key filenames,
   overwrites, announcements that post immediately.
-- **approve**: `bin/canvas-export approve <plan>` runs only in a real terminal,
+- **approve**: `bin/canvas-harness approve <plan>` runs only in a real terminal,
   so only you can approve. It records a fingerprint of the exact plan.
 - **apply**: sends the plan once. It refuses if anything changed after approval.
 
-## Your files (`local/`, never committed)
+## Your files (never committed)
 
 | file | what it holds | written by |
 |---|---|---|
-| secrets file | `CANVAS_BASE_URL`, `CANVAS_API_TOKEN`, `CANVAS_COURSE_IDS` | you, with `bin/+a NAME` |
-| `courses.json` | short names (`@chem`), Canvas ids, exact titles, your local project folders | `/setup` |
-| `profile.json` | timezone, PDF naming, default upload folder | `/setup` |
-| `canvas-config.json` | your switches (below) | **you only** |
-| `plans/`, `uploads/<alias>/` | plan files, files waiting to upload | you and Claude |
+| `.env` (repo root) | `CANVAS_BASE_URL`, `CANVAS_API_TOKEN`, `CANVAS_COURSE_IDS` | **you only**, from `.env.example` |
+| `local/courses.json` | short names (`@chem`), Canvas ids, exact titles, your local project folders | `/setup` |
+| `local/profile.json` | timezone, PDF naming, default upload folder | `/setup` |
+| `local/canvas-config.json` | your switches (below) | **you only** |
+| `local/plans/`, `local/uploads/<alias>/` | plan files, files waiting to upload | you and Claude |
 
-`bin/+a NAME` asks for the value at a hidden prompt, so it never shows on
-screen, in shell history, or in Claude's view. `bin/+a -l` lists names only.
+Instead of editing `.env` by hand, you can run `bin/+a NAME` in your terminal.
+It asks for the value at a hidden prompt, so it never shows on screen or in
+shell history. `bin/+a -l` lists names only.
 
-Set `CANVAS_EXPORT_LOCAL` to keep these files somewhere other than `local/`.
+Set `CANVAS_HARNESS_ENV` to keep the secrets file elsewhere, and
+`CANVAS_HARNESS_LOCAL` to move the `local/` folder.
 
 ## Switches (`local/canvas-config.json`)
 
@@ -58,7 +66,7 @@ Set `CANVAS_EXPORT_LOCAL` to keep these files somewhere other than `local/`.
 | `auto_publish` | New assignments, pages, quizzes and discussions are created published. | They're created as unpublished drafts. |
 
 A plan that sets `published` itself keeps that value. Changing a switch
-cancels earlier approvals. `bin/canvas-export config` shows the current values.
+cancels earlier approvals. `bin/canvas-harness config` shows the current values.
 
 ## Safety
 
@@ -69,6 +77,11 @@ The project's `.claude/settings.json` turns on two hooks and some deny rules:
 - **Approval guard** (`.claude/hooks/guard_approvals.py`): Claude can't edit
   `canvas-config.json` or any `*.approved` stamp, so it can't approve its own
   plans or switch on auto-approve.
+- **Delete guard** (`.claude/hooks/guard_deletes.py`): Claude must ask you
+  before deleting anything (`rm`, `find -delete`, `git clean`, code that
+  deletes). Catastrophic deletes are always blocked, such as `rm -rf` of `/`, `~`,
+  `..`, `.git`, `local/`, the whole project or anything outside it, and
+  `git clean -x`, which would wipe `.env` and `local/`.
 
 These guards match patterns. They catch mistakes and common workarounds, but
 they are not a sandbox. In the CLI itself:
@@ -83,21 +96,22 @@ it like a password and revoke it in Canvas if it ever leaks.
 ## Commands
 
 ```sh
-bin/canvas-export check                  # test the connection (never prints the token)
-bin/canvas-export discover               # list courses you teach, with ids
-bin/canvas-export roster                 # check local/courses.json against Canvas
-bin/canvas-export config                 # show your switches
-bin/canvas-export preview|approve|apply <plan>
-bin/canvas-export uploads                # files waiting in local/uploads/
-bin/canvas-export pdf <file.html> --course @alias [--pages N]   # needs Chrome/Chromium
-bin/canvas-export get @chem/assignments --all
+bin/canvas-harness doctor                 # setup checklist: what's done, what's next
+bin/canvas-harness check                  # test the connection (never prints the token)
+bin/canvas-harness discover               # list courses you teach, with ids
+bin/canvas-harness roster                 # check local/courses.json against Canvas
+bin/canvas-harness config                 # show your switches
+bin/canvas-harness preview|approve|apply <plan>
+bin/canvas-harness uploads                # files waiting in local/uploads/
+bin/canvas-harness pdf <file.html> --course @alias [--pages N]   # needs Chrome/Chromium
+bin/canvas-harness get @chem/assignments --all
 ```
 
 ## Requirements
 
 - Python 3.9+ (standard library only)
 - Claude Code
-- Chrome or Chromium, only for `pdf` (override the path with `CANVAS_EXPORT_CHROME`)
+- Chrome or Chromium, only for `pdf` (override the path with `CANVAS_HARNESS_CHROME`)
 
 ## Tests
 

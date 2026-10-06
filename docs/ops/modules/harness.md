@@ -8,11 +8,12 @@ updated: 2026-10-06
 
 ## Purpose
 
-The whole canvas-export product: CLI, plan workflow, and the shipped Claude Code harness.
+The whole canvas-harness product: CLI, plan workflow, and the shipped Claude Code harness.
 
 ## Inputs
 
-- `local/` user files (see README): secrets, profile.json, courses.json, canvas-config.json.
+- Secrets file at the repo root (user-written from the example template).
+- `local/` user files: profile.json, courses.json, canvas-config.json, plans/, uploads/.
 
 ## Outputs
 
@@ -20,13 +21,14 @@ The whole canvas-export product: CLI, plan workflow, and the shipped Claude Code
 
 ## Interfaces / Contracts
 
-- CLI: `bin/canvas-export <check|whoami|courses|discover|roster|config|preview|approve|apply|uploads|pdf|get|post|put|delete>`.
+- CLI: `bin/canvas-harness <doctor|check|whoami|courses|discover|roster|config|preview|approve|apply|uploads|pdf|get|post|put|delete>`.
+- `/setup` skill (`.claude/skills/setup`): guided, re-runnable setup.
 - `bin/+a NAME`: hidden-prompt writer for the secrets file.
-- Plan format: `canvas_export/plan.py` docstring.
+- Plan format: `canvas_harness/plan.py` docstring.
 - `profile.json` keys: timezone, projects_root, default_upload_folder, answer_key_label, answer_key_words.
 - `courses.json`: `{"courses": [{alias, id, name, local_project?, pdf_prefix?}]}`.
 - `canvas-config.json`: auto_approve, auto_preview, auto_publish (defaults false/true/false).
-- `$CANVAS_EXPORT_LOCAL` overrides the `local/` folder; `$CANVAS_EXPORT_CHROME` the browser.
+- `$CANVAS_HARNESS_ENV` overrides the secrets file, `$CANVAS_HARNESS_LOCAL` the `local/` folder, `$CANVAS_HARNESS_CHROME` the browser.
 
 ## Invariants
 
@@ -35,6 +37,8 @@ The whole canvas-export product: CLI, plan workflow, and the shipped Claude Code
 - Writes only under `/api/v1/courses/<id>` for allowlisted ids.
 - A plan is applied once, only with a matching typed approval or an auto-approval of an unflagged plan.
 - Claude cannot edit `canvas-config.json` or `*.approved` (hooks plus deny rules).
+- Claude cannot write the course allowlist (`CANVAS_COURSE_IDS` lives in the user-written secrets file).
+- Deletes need the user's confirmation; catastrophic deletes are denied (delete guard).
 
 ## Dependencies
 
@@ -53,10 +57,11 @@ Reason: Stage 1 scaffold.
 ## Active Sprints
 
 - 2026-10-06-harness-scaffold
+- 2026-10-06-harness-setup
 
 ## Next Milestone
 
-Stage 2: the CLI enforces the lock on switches. Stage 3: `/setup` skill.
+Live `/setup` run on a real Canvas account; Stage 2: the CLI enforces the lock on switches.
 
 ## Risks
 

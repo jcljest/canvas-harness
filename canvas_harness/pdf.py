@@ -9,7 +9,7 @@ Default names: `<prefix> <Topic> <File>.pdf`, where prefix is the course's
 becomes `<prefix> <Topic> Practice <answer_key_label>.pdf`.
 
 Rendering uses headless Chrome/Chromium without the date/URL header/footer;
-override the binary with $CANVAS_EXPORT_CHROME.
+override the binary with $CANVAS_HARNESS_CHROME.
 """
 import os
 import re
@@ -77,12 +77,12 @@ def default_name(course, src, project_dir, profile=None):
 
 
 def chrome_path():
-    explicit = os.environ.get("CANVAS_EXPORT_CHROME")
+    explicit = os.environ.get("CANVAS_HARNESS_CHROME")
     found = [shutil.which(n) or "" for n in CHROME_NAMES]
     for c in ([explicit] if explicit else []) + list(CHROME_CANDIDATES) + found:
         if c and Path(c).exists():
             return c
-    raise PdfError("Chrome/Chromium not found; set CANVAS_EXPORT_CHROME to its binary")
+    raise PdfError("Chrome/Chromium not found; set CANVAS_HARNESS_CHROME to its binary")
 
 
 def render(src, out):

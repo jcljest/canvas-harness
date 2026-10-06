@@ -10,11 +10,12 @@ from unittest import mock
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from canvas_export import cli as lc  # noqa: E402
-from canvas_export import plan as lp  # noqa: E402
+from canvas_harness import cli as lc  # noqa: E402
+from canvas_harness import plan as lp  # noqa: E402
 
 # Never touch a real local/ folder in tests.
-os.environ["CANVAS_EXPORT_LOCAL"] = tempfile.mkdtemp()
+os.environ["CANVAS_HARNESS_LOCAL"] = tempfile.mkdtemp()
+os.environ["CANVAS_HARNESS_ENV"] = os.path.join(os.environ["CANVAS_HARNESS_LOCAL"], "secrets")
 
 ROSTER = {"chem": {"alias": "chem", "id": 1001, "name": "Chemistry 101 Fall"}}
 TOKEN = "fake~token~abc"

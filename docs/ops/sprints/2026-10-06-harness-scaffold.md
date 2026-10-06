@@ -4,10 +4,10 @@ module: harness
 status: ready_for_review
 health: green
 owner_session: null
-worktree: canvas-export
+worktree: canvas-harness
 started: 2026-10-06
 updated: 2026-10-06
-base_commit: null
+base_commit: 6243c07
 depends_on: []
 blocks: []
 ---
@@ -16,7 +16,7 @@ blocks: []
 
 ## Objective
 
-A clonable `canvas-export` repo: generic CLI code, self-contained Claude Code
+A clonable `canvas-harness` repo: generic CLI code, self-contained Claude Code
 guards, and every user-specific file under a gitignored `local/` folder.
 
 ## Why This Matters
@@ -26,8 +26,8 @@ a working, guarded Canvas posting tool, without forking someone's personal setup
 
 ## Scope
 
-- Package `canvas_export/` (cli, plan, pdf, settings) ported from a personal prototype.
-- All per-user state under `local/` (override: `$CANVAS_EXPORT_LOCAL`): the secrets file, `profile.json`, `courses.json`, `canvas-config.json`, `plans/`, `uploads/`.
+- Package `canvas_harness/` (cli, plan, pdf, settings) ported from a personal prototype.
+- All per-user state under `local/` (override: `$CANVAS_HARNESS_LOCAL`): the secrets file, `profile.json`, `courses.json`, `canvas-config.json`, `plans/`, `uploads/`.
 - `profile.json`: timezone, PDF naming (per-course prefix, answer-key label/words), default upload folder. No hardcoded person, school, course or path.
 - Safe defaults: auto_approve false, auto_preview true, auto_publish false.
 - Date warning when a date's UTC offset doesn't match the profile timezone.
@@ -60,7 +60,7 @@ a working, guarded Canvas posting tool, without forking someone's personal setup
 
 ### 2026-10-06
 - Owner decisions: self-contained repo (no shared-harness symlinks); docs/ops ships but stays generic; user data in gitignored `local/`.
-- Ported CLI/plan/pdf into `canvas_export/` package; new `settings.py` owns all user-file paths, profile, roster and switches.
+- Ported CLI/plan/pdf into `canvas_harness/` package; new `settings.py` owns all user-file paths, profile, roster and switches.
 - Generalized: PDF prefix per course (`pdf_prefix`), answer-key words/label from profile, Chrome lookup cross-platform, `local_project` absolute/~/relative-to-projects_root.
 - New: timezone-offset warning from profile; `SetupError` -> "type /setup" hint instead of tracebacks.
 - Guards: secret guard copied; new `guard_approvals.py` protects `canvas-config.json` AND `*.approved` stamps (closes stamp-forging gap); deny rules in `.claude/settings.json`.
@@ -68,7 +68,7 @@ a working, guarded Canvas posting tool, without forking someone's personal setup
 
 ## Files Changed
 
-- canvas_export/{__init__,__main__,settings,cli,plan,pdf}.py; bin/canvas-export, bin/+a
+- canvas_harness/{__init__,__main__,settings,cli,plan,pdf}.py; bin/canvas-harness, bin/+a
 - tests/test_{cli,plan,uploads,pdf}.py; .claude/hooks/tests/test_{block_env_read,guard_approvals}.py
 - .claude/settings.json, .claude/hooks/{block_env_read,guard_approvals}.py, .claude/skills/canvas-post/SKILL.md
 - README.md, CLAUDE.md, .gitignore, templates/*.example.json, examples/plan-basic/
@@ -82,7 +82,7 @@ a working, guarded Canvas posting tool, without forking someone's personal setup
 python3 -m unittest discover -s tests                 -> Ran 74 tests, OK
 python3 -m unittest discover -s .claude/hooks/tests   -> Ran 15 tests, OK (1 skipped: shell wrapper not shipped)
 personal-data grep over all non-ignored files          -> clean
-bin/canvas-export check (no local/)                    -> rc 2, "missing ... bin/+a ... type /setup"
+bin/canvas-harness check (no local/)                    -> rc 2, "missing ... bin/+a ... type /setup"
 local/ from templates + preview examples/plan-basic    -> previews @chem; wrong offset warns "doesn't match America/Chicago"
 git status --ignored                                    -> local/ ignored, nothing from local/ untracked
 ```
@@ -113,7 +113,7 @@ git status --ignored                                    -> local/ ignored, nothi
 Stage 1 scaffold built and verified offline.
 
 ### Current State
-ready_for_review; nothing committed yet (repo initialized, no commits).
+ready_for_review; initial commit 6243c07 pushed to origin/main.
 
 ### Next Action
-Owner reviews; then first commit, Stage 2 (CLI-enforced switch lock), Stage 3 (`/setup` skill).
+Committed 6243c07 and pushed to origin (github.com/jcljest/canvas-harness). Next: Stage 2 (CLI-enforced switch lock), Stage 3 (`/setup` skill).

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-canvas-export is a clonable Claude Code harness for posting to Canvas LMS.
+canvas-harness is a clonable Claude Code harness for posting to Canvas LMS.
 Each user clones it, runs `/setup` in Claude Code, and gets a guarded workflow:
 plan -> preview -> approve (human) -> apply -> verify.
 
@@ -10,12 +10,14 @@ plan -> preview -> approve (human) -> apply -> verify.
 
 | part | role |
 |---|---|
-| `canvas_export/settings.py` | locations of user files (`local/`), loading profile, roster and switches |
-| `canvas_export/cli.py` | course-scoped Canvas REST client and command line |
-| `canvas_export/plan.py` | plan validation, preview, approval stamps, apply |
-| `canvas_export/pdf.py` | HTML -> PDF into a course's upload folder |
-| `.claude/` | shipped harness: settings, guard hooks, `canvas-post` and `setup` skills |
-| `local/` (gitignored) | everything personal; never committed |
+| `canvas_harness/settings.py` | locations of user files (`local/`), loading profile, roster and switches |
+| `canvas_harness/cli.py` | course-scoped Canvas REST client and command line |
+| `canvas_harness/plan.py` | plan validation, preview, approval stamps, apply |
+| `canvas_harness/pdf.py` | HTML -> PDF into a course's upload folder |
+| `canvas_harness/doctor.py` | read-only setup checklist |
+| `.claude/` | shipped harness: settings; secret, approval and delete guards; `canvas-post` and `setup` skills |
+| secrets file at root (gitignored) | URL, token, course allowlist; user-written only |
+| `local/` (gitignored) | everything else personal; never committed |
 | `templates/` | example user files with safe defaults |
 
 ## Boundaries

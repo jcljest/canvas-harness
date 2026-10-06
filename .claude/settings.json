@@ -20,20 +20,51 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard_deletes.py\"",
+            "timeout": 10
+          }
+        ]
       }
     ]
   },
   "permissions": {
     "deny": [
       "Read(**/.env)",
-      "Read(**/.env.*)",
       "Read(**/.envrc)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/.env.dev)",
+      "Read(**/.env.development)",
+      "Read(**/.env.prod)",
+      "Read(**/.env.production)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.test)",
       "Edit(**/.env)",
-      "Edit(**/.env.*)",
       "Edit(**/.envrc)",
+      "Edit(**/.env.local)",
+      "Edit(**/.env.*.local)",
+      "Edit(**/.env.dev)",
+      "Edit(**/.env.development)",
+      "Edit(**/.env.prod)",
+      "Edit(**/.env.production)",
+      "Edit(**/.env.staging)",
+      "Edit(**/.env.test)",
       "Write(**/.env)",
-      "Write(**/.env.*)",
       "Write(**/.envrc)",
+      "Write(**/.env.local)",
+      "Write(**/.env.*.local)",
+      "Write(**/.env.dev)",
+      "Write(**/.env.development)",
+      "Write(**/.env.prod)",
+      "Write(**/.env.production)",
+      "Write(**/.env.staging)",
+      "Write(**/.env.test)",
       "Edit(**/canvas-config.json)",
       "Write(**/canvas-config.json)",
       "Edit(**/*.approved)",
