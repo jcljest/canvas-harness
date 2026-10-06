@@ -119,3 +119,9 @@ bin/canvas-harness get @chem/assignments --all
 python3 -m unittest discover -s tests
 python3 -m unittest discover -s .claude/hooks/tests
 ```
+
+## License
+
+MIT © Jeffrey Lai. Use it, change it and share it. Just keep the copyright
+notice. See [LICENSE](LICENSE), and [NOTICE.md](NOTICE.md) for
+acknowledgments of the software and services this tool works with.

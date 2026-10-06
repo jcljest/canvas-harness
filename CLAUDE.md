@@ -17,5 +17,6 @@
   unflagged plans itself.
 - **Generic code:** code, templates, skills and docs must not contain any one
   user's names, school, course ids or paths. Personal data belongs only in `local/`.
+  The exception is author credit: keep "Jeffrey Lai" in `LICENSE`, `NOTICE.md` and the README's License section.
 - Run both test suites after changes (see README → Tests).
 - Design records live in `docs/ops/` (architecture, module, sprints, ADRs).

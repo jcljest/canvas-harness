@@ -44,6 +44,10 @@ The whole canvas-harness product: CLI, plan workflow, and the shipped Claude Cod
 
 - Python 3.9+ stdlib. Chrome/Chromium for `pdf` only. Claude Code for the harness.
 
+## License
+
+- MIT, copyright Jeffrey Lai (`LICENSE`). Acknowledgments of external software and services in `NOTICE.md`; no third-party code is bundled.
+
 ## Non-goals
 
 - OAuth, multi-user servers, non-Claude agents (CLI works without Claude, but the guards are Claude Code hooks).
