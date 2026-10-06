@@ -61,7 +61,7 @@ Set `CANVAS_HARNESS_ENV` to keep the secrets file elsewhere, and
 
 | switch | `true` | `false` (default unless noted) |
 |---|---|---|
-| `auto_approve` | `apply` approves a plan itself **when nothing is flagged**. Flagged plans still need your typed `approve`. | You always type `approve`. |
+| `auto_approve` | `apply` approves **every** plan itself, with no check first. Anything that would have been flagged (deletes, past dates, answer-key filenames, overwrites, announcements that post immediately) is sent anyway and reported afterwards as an `ALERT` line and under `"alerts"` in `<plan>.result.json`. | You always type `approve`. |
 | `auto_preview` | The preview opens in your browser (default). | The preview file is written but not opened. |
 | `auto_publish` | New assignments, pages, quizzes and discussions are created published. | They're created as unpublished drafts. |
 

@@ -36,7 +36,7 @@ The whole canvas-harness product: CLI, plan workflow, and the shipped Claude Cod
 - No user-specific data in tracked files.
 - The token is never printed, logged or put on argv.
 - Writes only under `/api/v1/courses/<id>` for allowlisted ids.
-- A plan is applied once, only with a matching typed approval or an auto-approval of an unflagged plan.
+- A plan is applied once, only with a matching typed approval or an auto-approval (any plan when `auto_approve` is on; warnings become post-run alerts, ADR-0004).
 - Claude cannot edit `canvas-config.json` or `*.approved` (hooks plus deny rules).
 - Claude cannot write the course allowlist (`CANVAS_COURSE_IDS` lives in the user-written secrets file).
 - Deletes need the user's confirmation; catastrophic deletes are denied (delete guard).

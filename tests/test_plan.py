@@ -228,7 +228,7 @@ class AutoApprove(unittest.TestCase):
         self.assertTrue(stamp["approved_by"].startswith("auto"))
         self.assertIsNotNone(stamp["applied_at"])
 
-    def test_flagged_plans_need_typed_approval(self):
+    def test_flagged_plans_apply_then_alert(self):
         past = json.loads(json.dumps(ASSIGN))
         past["body"]["assignment"]["due_at"] = "2020-01-01T23:59:00-05:00"
         flagged = [
@@ -240,10 +240,20 @@ class AutoApprove(unittest.TestCase):
         for step in flagged:
             p = make_plan([step], {"lab3.html": "x"})
             calls, send = self.send()
-            with self.assertRaisesRegex(lp.PlanError, "auto_approve is on, but", msg=json.dumps(step)):
-                lp.apply(p, ROSTER, send, describe=lambda _: None, settings=self.ON)
-            self.assertEqual(calls, [])
-            self.assertIsNone(lp.read_stamp(p))
+            said = []
+            lp.apply(p, ROSTER, send, describe=said.append, settings=self.ON)
+            self.assertEqual(len(calls), 1, msg=json.dumps(step))
+            self.assertTrue(lp.read_stamp(p)["approved_by"].startswith("auto"))
+            result = json.loads(p.with_name(p.name + ".result.json").read_text())
+            self.assertTrue(result["alerts"], msg=json.dumps(step))
+            self.assertTrue(said[-1].startswith("ALERT step 1:"), msg=said)
+
+    def test_clean_plan_has_no_alerts(self):
+        p = make_plan([ASSIGN], {"lab3.html": "x"})
+        calls, send = self.send()
+        lp.apply(p, ROSTER, send, describe=lambda _: None, settings=self.ON)
+        result = json.loads(p.with_name(p.name + ".result.json").read_text())
+        self.assertNotIn("alerts", result)
 
     def test_typed_approval_still_works_when_on(self):
         p = make_plan([{"course": "@chem", "method": "DELETE", "path": "pages/old", "body": {}}])

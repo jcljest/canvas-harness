@@ -220,16 +220,16 @@ if __name__ == "__main__":
 class AutoApproveUploads(unittest.TestCase):
     ON = {"auto_approve": True, "auto_preview": False}
 
-    def test_answer_key_and_overwrite_need_typed_approval(self):
+    def test_answer_key_and_overwrite_upload_then_alert(self):
         for step, fname in [({**UPLOAD, "upload": "lab3-ans.pdf"}, "lab3-ans.pdf"),
                             ({**UPLOAD, "on_duplicate": "overwrite"}, "lab3.pdf")]:
             p, up = setup([step])
             (up / "chem" / fname).write_bytes(b"%PDF-1.4 fake")
-            sent = []
-            with self.assertRaisesRegex(lp.PlanError, "auto_approve is on, but"):
-                lp.apply(p, ROSTER, lambda *a: sent.append(a), describe=lambda _: None,
-                         upload=lambda *a: sent.append(a) or {"id": 7}, uploads_root=up, settings=self.ON)
-            self.assertEqual(sent, [])
+            sent, said = [], []
+            lp.apply(p, ROSTER, lambda *a: sent.append(a), describe=said.append,
+                     upload=lambda *a: sent.append(a) or {"id": 7}, uploads_root=up, settings=self.ON)
+            self.assertEqual(len(sent), 1)
+            self.assertTrue(any(x.startswith("ALERT step 1:") for x in said), msg=said)
 
     def test_clean_upload_is_auto_approved(self):
         p, up = setup([UPLOAD])

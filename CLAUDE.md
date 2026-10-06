@@ -14,7 +14,7 @@
   or any `*.approved` file. Read switches with `bin/canvas-harness config`.
 - **Approval:** `approve` is typed by the user in their own terminal. Never
   approve on their behalf. If their `auto_approve` is on, `apply` approves
-  unflagged plans itself.
+  every plan itself; flagged items are reported afterwards as alerts.
 - **Generic code:** code, templates, skills and docs must not contain any one
   user's names, school, course ids or paths. Personal data belongs only in `local/`.
   The exception is author credit: keep "Jeffrey Lai" in `LICENSE`, `NOTICE.md` and the README's License section.

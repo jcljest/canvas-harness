@@ -23,7 +23,7 @@ The command is `bin/canvas-harness` from the repo root (or `canvas-harness` if
   missing, ask the user to run `bin/+a NAME` in their own terminal (it needs a real
   terminal for the hidden prompt).
 - Create, edit or work around `canvas-config.json` or any `*.approved` file.
-  Don't suggest turning `auto_approve` on to get past a flagged plan.
+  Don't suggest turning `auto_approve` on to get past the typed approval.
 - Use bare `post`/`put`/`delete` for changes. Every change goes through a plan.
 
 ## Procedure
@@ -46,12 +46,14 @@ The command is `bin/canvas-harness` from the repo root (or `canvas-harness` if
 4. **Preview.** Run `canvas-harness preview <plan>`. Relay the summary, every
    `!` warning and the `approval:` line, and give the preview file path.
 5. **Approval.**
-   - `approval: AUTO` means the user turned on auto_approve and nothing is
-     flagged. Continue to step 6.
+   - `approval: AUTO` means the user turned on auto_approve. Continue to
+     step 6, even if warnings are listed: they become alerts after the run.
    - Otherwise, ask the user to run `bin/canvas-harness approve <plan>` in their
      own terminal (it needs a real terminal). You cannot approve for them.
    - Any edit to the plan or its files cancels approval. Preview again.
-6. **Apply.** Run `canvas-harness apply <plan>`. A plan runs once. If a step
+6. **Apply.** Run `canvas-harness apply <plan>`. If the output has `ALERT`
+   lines (also under `"alerts"` in `<plan>.result.json`), tell the user each one
+   plainly: it already happened. A plan runs once. If a step
    fails, `<plan>.result.json` records what was sent. Tell the user and make a
    new plan for the remaining steps. Never re-run the old one.
 7. **Verify.** GET each created or updated item back and report its `html_url`

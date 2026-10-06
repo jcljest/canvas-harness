@@ -44,9 +44,10 @@ refuses if that hash no longer matches, or if the plan was already applied.
 
 local/canvas-config.json (user-edited; missing = safe defaults) holds three switches:
     {"auto_approve": false, "auto_preview": true, "auto_publish": false}
-auto_approve lets `apply` approve a plan itself when it has no blocking
-warnings (every warning except "will be PUBLISHED"); anything flagged still
-needs the typed `approve`. auto_preview opens the preview in a browser.
+auto_approve lets `apply` approve any plan itself, with no check first. Warnings
+(every one except "will be PUBLISHED") don't block it; they are written
+afterwards as alerts: printed after the run and saved under "alerts" in
+<plan>.result.json. auto_preview opens the preview in a browser.
 auto_publish fills in `published` on new assignments, pages, quizzes and
 (non-announcement) discussions that don't set it; an explicit value wins.
 """
@@ -254,8 +255,8 @@ def warnings_for(step, now=None, profile=None):
     return out
 
 
-def blocking_warnings(plan):
-    """Warnings that keep a plan from being auto-approved, as 'step N: text'."""
+def alert_warnings(plan):
+    """Warnings reported as alerts after an auto-approved run, as 'step N: text'."""
     return [f"step {st['n']}: {w}" for st in plan["steps"] for w in warnings_for(st)
             if w != PUBLISHED_WARNING]
 
@@ -263,10 +264,11 @@ def blocking_warnings(plan):
 def approval_line(plan, settings):
     if not settings["auto_approve"]:
         return "approval: you type `canvas-harness approve <plan>` (auto_approve is off)"
-    blocking = blocking_warnings(plan)
-    if not blocking:
-        return "approval: AUTO (auto_approve is on and nothing is flagged); `apply` will send it"
-    return "approval: you type `canvas-harness approve <plan>` (auto_approve is on, but flagged: " + "; ".join(blocking) + ")"
+    alerts = alert_warnings(plan)
+    if not alerts:
+        return "approval: AUTO (auto_approve is on); `apply` will send it"
+    return ("approval: AUTO (auto_approve is on); `apply` will send it and then write alerts for: "
+            + "; ".join(alerts))
 
 
 def _fmt(key, value):
@@ -429,15 +431,13 @@ def apply(plan_path, roster, send, describe=print, upload=None, uploads_root=Non
     settings = settings or st.load_switches()
     plan, digest = load_plan(plan_path, roster, uploads_root, settings)
     stamp = read_stamp(plan_path)
+    alerts = []
     if not stamp and settings["auto_approve"]:
-        blocking = blocking_warnings(plan)
-        if blocking:
-            raise PlanError("auto_approve is on, but this plan is flagged, so you must run "
-                            "`canvas-harness approve` yourself:\n  " + "\n  ".join(blocking))
+        alerts = alert_warnings(plan)
         stamp = {"digest": digest, "approved_at": datetime.now(timezone.utc).isoformat(),
                  "approved_by": "auto (canvas-config.json)", "applied_at": None}
         stamp_path(plan_path).write_text(json.dumps(stamp, indent=2) + "\n")
-        describe(f"auto-approved {digest[:12]} (canvas-config.json: auto_approve is on, nothing flagged)")
+        describe(f"auto-approved {digest[:12]} (canvas-config.json: auto_approve is on)")
     if not stamp:
         raise PlanError("plan is not approved; run `canvas-harness preview` then `canvas-harness approve`")
     if stamp.get("digest") != digest:
@@ -474,5 +474,10 @@ def apply(plan_path, roster, send, describe=print, upload=None, uploads_root=Non
         if log and any(r["ok"] for r in log):
             stamp["applied_at"] = datetime.now(timezone.utc).isoformat()
             stamp_path(plan_path).write_text(json.dumps(stamp, indent=2) + "\n")
-        result_file.write_text(json.dumps({"digest": digest, "steps": log}, indent=2) + "\n")
+        result = {"digest": digest, "steps": log}
+        if alerts:
+            result["alerts"] = alerts
+            for a in alerts:
+                describe(f"ALERT {a}")
+        result_file.write_text(json.dumps(result, indent=2) + "\n")
     return log
