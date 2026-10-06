@@ -343,6 +343,26 @@ def _plan_command(args):
         return 1
 
 
+def _which(name):
+    """Print the course a name means. Exit 0 on exactly one match, 1 otherwise."""
+    roster = load_roster()
+    if not roster:
+        print(f"No courses in {st.roster_path()}. {SETUP_HINT}")
+        return 1
+    matches, candidates = st.resolve_course(name, roster)
+    if matches:
+        c = roster[matches[0]]
+        print(f"@{c['alias']} = {c['name']} (id {c['id']})")
+        return 0
+    print(f"no course is called {name!r}.")
+    for a in candidates:
+        c = roster[a]
+        print(f"  maybe @{a} = {c['name']}" + (f" (also called: {', '.join(c['nicknames'])})" if c.get("nicknames") else ""))
+    if not candidates:
+        print("  courses: " + ", ".join(f"@{a} ({c['name']})" for a, c in sorted(roster.items())))
+    return 1
+
+
 def main(argv=None):
     try:
         return _main(argv)
@@ -367,6 +387,8 @@ def _main(argv=None):
     pv.add_argument("--no-open", action="store_true", help="don't open the preview in a browser")
     pv.add_argument("--open", action="store_true", help="open the preview even if auto_preview is false")
     sub.add_parser("config", help="show your switches (auto_approve, auto_preview, auto_publish); only you edit that file")
+    wh = sub.add_parser("which", help="which course a name means, e.g. which \"AP Physics\" (uses aliases, nicknames, titles)")
+    wh.add_argument("name", nargs="+", help="what you call the class; several words are joined")
     sub.add_parser("doctor", help="checklist of what is set up and what to do next (never prints secrets)").add_argument(
         "--offline", action="store_true", help="skip the connection test")
     sub.add_parser("approve", help="YOU approve a previewed plan (needs a terminal)").add_argument("plan")
@@ -428,6 +450,8 @@ def _main(argv=None):
             print(f"canvas-harness pdf: {e}", file=sys.stderr)
             return 2
         return 0
+    if args.cmd == "which":
+        return _which(" ".join(args.name))
     if args.cmd == "doctor":
         from . import doctor
         return doctor.run(offline=args.offline)
@@ -495,6 +519,8 @@ def _main(argv=None):
                 print(f"@{c['alias']:<8} {c['id']:>6}  allowed={'yes' if allowed else 'NO '}  "
                       f"{'ok      ' if match else 'MISMATCH'}  {c['name']}"
                       + ("" if match else f"  (live: {live})"))
+                if c.get("nicknames"):
+                    print(f"{'':>17}also called: {', '.join(c['nicknames'])}")
             extra = cfg["course_ids"] - {str(c["id"]) for c in roster.values()}
             for cid in sorted(extra, key=int):
                 ok = False

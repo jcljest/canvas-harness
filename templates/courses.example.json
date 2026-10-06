@@ -4,13 +4,22 @@
       "alias": "chem",
       "id": 1001,
       "name": "Chemistry 101 Fall",
+      "nicknames": [
+        "Chem",
+        "Chemistry",
+        "Gen Chem"
+      ],
       "local_project": "~/Projects/chemistry",
       "pdf_prefix": "CHEM"
     },
     {
       "alias": "bio",
       "id": 1002,
-      "name": "Biology 101 Fall"
+      "name": "Biology 101 Fall",
+      "nicknames": [
+        "Bio",
+        "Biology"
+      ]
     }
   ]
 }

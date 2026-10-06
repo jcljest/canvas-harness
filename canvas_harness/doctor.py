@@ -85,6 +85,10 @@ def run(offline=False, request=None, load_config=None, parse_secrets=None):
             where = f", folder {proj}" + ("" if proj.is_dir() else " (MISSING)") if proj else ""
             _line(OK if allowed else TODO, f"course @{alias}",
                   f"{c['name']} (id {c['id']}){where}" + ("" if allowed else f"; add {c['id']} to CANVAS_COURSE_IDS"))
+            if not c.get("nicknames"):
+                _line(WARN, f"course @{alias} nicknames", "none; run /setup so Claude knows what you call this class")
+            else:
+                _line(OK, f"course @{alias} nicknames", ", ".join(c["nicknames"]))
         extra = ids - {str(c["id"]) for c in roster.values()}
         if extra:
             _line(WARN, "allowed ids without an alias", ", ".join(sorted(extra)) + "; run /setup to name them or remove them")

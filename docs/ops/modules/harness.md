@@ -21,12 +21,13 @@ The whole canvas-harness product: CLI, plan workflow, and the shipped Claude Cod
 
 ## Interfaces / Contracts
 
-- CLI: `bin/canvas-harness <doctor|check|whoami|courses|discover|roster|config|preview|approve|apply|uploads|pdf|get|post|put|delete>`.
+- CLI: `bin/canvas-harness <doctor|which|check|whoami|courses|discover|roster|config|preview|approve|apply|uploads|pdf|get|post|put|delete>`.
 - `/setup` skill (`.claude/skills/setup`): guided, re-runnable setup.
 - `bin/+a NAME`: hidden-prompt writer for the secrets file.
 - Plan format: `canvas_harness/plan.py` docstring.
 - `profile.json` keys: timezone, projects_root, default_upload_folder, answer_key_label, answer_key_words.
-- `courses.json`: `{"courses": [{alias, id, name, local_project?, pdf_prefix?}]}`.
+- `courses.json`: `{"courses": [{alias, id, name, nicknames?, local_project?, pdf_prefix?}]}`. Every name (alias, nickname, title; compared ignoring case, spaces and punctuation) must belong to one course only.
+- `canvas-harness which NAME`: exit 0 with the one matching course, exit 1 with candidates.
 - `canvas-config.json`: auto_approve, auto_preview, auto_publish (defaults false/true/false).
 - `$CANVAS_HARNESS_ENV` overrides the secrets file, `$CANVAS_HARNESS_LOCAL` the `local/` folder, `$CANVAS_HARNESS_CHROME` the browser.
 

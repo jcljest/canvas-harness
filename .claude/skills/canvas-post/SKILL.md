@@ -9,7 +9,7 @@ Everything personal is gitignored: the secrets file at the repo root, and the `l
 
 | file | what it is | who writes it |
 |---|---|---|
-| `local/courses.json` | aliases, Canvas ids, exact titles, project folders | `/setup` (Claude) |
+| `local/courses.json` | aliases, nicknames, Canvas ids, exact titles, project folders | `/setup` (Claude) |
 | `local/profile.json` | timezone, PDF naming, default upload folder | `/setup` (Claude) |
 | `local/canvas-config.json` | `auto_approve`, `auto_preview`, `auto_publish` | **the user only** |
 | `.env` at the repo root | school URL, token, allowed course ids | **the user only** |
@@ -30,10 +30,14 @@ The command is `bin/canvas-harness` from the repo root (or `canvas-harness` if
 
 1. **Verify the roster.** Run `canvas-harness roster`. It must exit 0. On a
    MISMATCH or missing alias, stop and tell the user.
-2. **Pick the course.** Read `local/courses.json`.
-   - If the user names a course and it clearly matches one alias, use it. If two
-     courses could match (similar names), **ask**. Never guess.
-   - Otherwise, if the material is a file under a course's `local_project`, use that course.
+2. **Pick the course.** Never guess between courses.
+   - If the user names a class in any form ("AP", "my physics class", "3rd period"),
+     run `canvas-harness which "<their words>"`. Exit 0 means use that course.
+     Exit 1 means ask which course they mean, showing the `maybe` lines. Once
+     they answer, offer to save their words as a nickname for that course in
+     `local/courses.json`, then run `which` again to confirm.
+   - If they don't name one, and the material is a file under a course's
+     `local_project`, use that course and say so.
    - Otherwise, ask. Handle several courses one at a time and say which is which.
 3. **Write a plan** at `local/plans/<alias>/<YYYY-MM-DD>-<slug>/plan.json`.
    Keep long HTML in a sibling file referenced from `files`. The format is in

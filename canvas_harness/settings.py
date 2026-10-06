@@ -15,6 +15,7 @@ Code never hardcodes a person, school, course or path; it reads these files.
 
 import json
 import os
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -107,8 +108,21 @@ def load_switches(path=None):
     return {**DEFAULT_SWITCHES, **raw}
 
 
+def name_key(text):
+    """Compare course names loosely: case, spaces, punctuation and a leading @ don't matter.
+    'AP Physics 2', 'ap-physics-2' and '@AP_Physics2' all give 'apphysics2'."""
+    return re.sub(r"[^0-9a-z]", "", str(text).lower())
+
+
+def course_names(course):
+    """Every name a course answers to: alias, nicknames and exact Canvas title."""
+    return [course["alias"], *course.get("nicknames", []), course["name"]]
+
+
 def load_roster(path=None):
-    """courses.json: alias -> {alias, id, name, local_project?, pdf_prefix?}. Missing file = empty."""
+    """courses.json: alias -> {alias, id, name, nicknames?, local_project?, pdf_prefix?}. Missing file = empty.
+
+    Rejects a roster where any name (alias, nickname or title) would point to two courses."""
     path = Path(path or roster_path())
     if not path.exists():
         return {}
@@ -116,12 +130,40 @@ def load_roster(path=None):
     courses = raw.get("courses") if isinstance(raw, dict) else None
     if not isinstance(courses, list):
         raise SetupError(f"{path.name} must look like {{\"courses\": [{{\"alias\": ..., \"id\": ..., \"name\": ...}}]}}")
-    out = {}
+    out, owner = {}, {}
     for c in courses:
         if not isinstance(c, dict) or not all(k in c for k in ("alias", "id", "name")):
             raise SetupError(f"{path.name}: every course needs alias, id and name")
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", str(c["alias"])):
+            raise SetupError(f"{path.name}: alias {c['alias']!r} must be letters, digits or _ (starting with a letter)")
+        if c["alias"] in out:
+            raise SetupError(f"{path.name}: alias @{c['alias']} is used twice")
+        nicks = c.get("nicknames", [])
+        if not isinstance(nicks, list) or not all(isinstance(n, str) and name_key(n) for n in nicks):
+            raise SetupError(f"{path.name}: @{c['alias']} nicknames must be a list of names, e.g. [\"AP\", \"AP Physics\"]")
+        for n in course_names(c):
+            other = owner.setdefault(name_key(n), c["alias"])
+            if other != c["alias"]:
+                raise SetupError(f"{path.name}: the name {n!r} would mean both @{other} and @{c['alias']}; "
+                                 "give it to one course only")
         out[c["alias"]] = c
     return out
+
+
+def resolve_course(text, roster):
+    """Map what the user calls a class to roster aliases.
+
+    Returns (matches, candidates): `matches` holds the one alias whose alias, nickname or
+    title equals the text (ignoring case, spaces and punctuation), or is empty;
+    `candidates` lists aliases with a name that contains the text or is contained in it,
+    for a helpful "did you mean" when nothing matched exactly."""
+    key = name_key(text)
+    if not key:
+        return [], []
+    matches = [a for a, c in roster.items() if any(name_key(n) == key for n in course_names(c))]
+    candidates = [a for a, c in roster.items() if a not in matches and any(
+        key in name_key(n) or name_key(n) in key for n in course_names(c) if name_key(n))]
+    return matches, candidates
 
 
 def project_dir(course, profile=None):

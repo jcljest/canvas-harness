@@ -29,8 +29,9 @@ asking the user short questions and doing everything else yourself.
 Run `bin/canvas-harness doctor --offline`.
 
 - If `local/courses.json` already exists, this is a **re-run**. Ask what to change:
-  add a course, remove a course, new school year (replace courses),
-  change profile settings, or just check everything. Do only that part, then
+  add a course, remove a course, add or change what they call a course
+  (nicknames), new school year (replace courses), change profile settings, or
+  just check everything. Do only that part, then
   finish with step 8.
 - Otherwise, tell the user there are about 8 short steps, and that they'll edit
   one file (the `.env` file) by hand, twice.
@@ -85,12 +86,26 @@ For each chosen course, ask (a few at a time, not all at once):
 - **Short name (alias):** used as `@alias` when posting. Suggest one from the
   course code, short and lowercase, letters, digits and `_` only (e.g. `chem`, `bio2`).
   Aliases must be unique.
+- **What they call it (nicknames):** "What do you call this class when you
+  talk about it, or when you ask me to post something?" Collect every
+  version: abbreviations ("AP", "AP2"), informal names ("AP Physics",
+  "Regular Physics"), even period names ("3rd period"). Case, spaces and
+  punctuation don't matter, so "AP Physics 2" also covers "ap-physics-2".
+  This is how Claude later connects "post this to AP" to the right course.
 - **Local project folder (optional):** where they keep this course's
   materials on this computer. It lets Claude pick the course from where a file
   lives, and makes `pdf` work. Check that it exists with `ls`. They can skip it.
 - **PDF name prefix (optional):** default is the alias in capitals.
 
-Show a summary table and get a yes before writing.
+**Check for overlaps before writing.** A name can belong to only one
+course; `roster` rejects a name (alias, nickname or exact title) that points
+to two. Also point out *near* overlaps that are allowed but risky. For example,
+"Physics" for a regular course while another course is "AP Physics": saying
+"physics" will always mean the regular course. Ask whether that's what they
+want, or whether "physics" should be left out so Claude asks each time.
+
+Show a summary table (alias, Canvas title, nicknames, folder) and get a yes
+before writing.
 
 ## 5. Write the roster, then the user allows those courses (second edit)
 
@@ -99,10 +114,13 @@ Write `local/courses.json`. Copy `id` and `name` exactly from the
 
 ```json
 {"courses": [{"alias": "chem", "id": 1001, "name": "<exact Canvas title>",
+              "nicknames": ["Chem", "Gen Chem", "3rd period"],
               "local_project": "~/Projects/chemistry", "pdf_prefix": "CHEM"}]}
 ```
 
-Leave out `local_project` and `pdf_prefix` when not given. Then tell the user
+Leave out `nicknames`, `local_project` and `pdf_prefix` when not given. Run
+`bin/canvas-harness which "<nickname>"` for a couple of their nicknames to
+show them it works. Any error from it means the file needs fixing first. Then tell the user
 to set this line in the `.env` file (you give the ids, they type them):
 
 ```

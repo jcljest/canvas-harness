@@ -51,6 +51,9 @@ with no manual file editing beyond the secrets.
 - [x] Anti-rm hook: tested deny cases (`rm -rf /`, `~`, `..`, `.git`, `local`, `git clean -fdx` at root) and ask cases (`rm file`, `find -delete`, `shutil.rmtree`), and ordinary commands allowed.
 - [x] `doctor` reports each setup step without printing secrets and works with nothing set up.
 - [x] `/setup` skill written; dry run of its steps against a fake `local/` succeeds where no live Canvas is needed.
+- [x] Course nicknames: `nicknames` list per course; roster rejects a name (alias, nickname or title) that points to two courses.
+- [x] `canvas-harness which NAME` resolves a teacher's name to one course, or says none matched (exit 1) with close candidates.
+- [x] `/setup` asks for nicknames and flags overlaps; `canvas-post` resolves names with `which` and offers to save new nicknames.
 - [x] All tests pass.
 
 ## Plan
@@ -69,7 +72,8 @@ with no manual file editing beyond the secrets.
 - `guard_deletes.py` + 5 tests (deny / ask / temp / allow / hook protocol); wired in settings.json.
 - `canvas-harness doctor [--offline]` + tests (all set, allowlist TODO, loose permissions, token never printed).
 - Owner renamed the project to canvas-harness (matches the GitHub repo): folder, package `canvas_harness`, command `bin/canvas-harness`, env vars `CANVAS_HARNESS_*`, all docs. Earlier records were updated to the new name.
-- `/setup` skill (8 steps, re-run mode, hook probe, two user edits). README quick start, CLAUDE.md, canvas-post skill, ADR-0002, module/architecture docs updated.
+- `/setup` skill (8 steps, re-run mode, hook probe, two user edits).
+- Course nicknames (owner request): `nicknames` in courses.json, collision check in load_roster, `which` command, doctor/roster display, setup step 4 asks "what do you call this class" and flags near overlaps, canvas-post resolves names via `which`. ADR-0003. README quick start, CLAUDE.md, canvas-post skill, ADR-0002, module/architecture docs updated.
 
 ## Files Changed
 
@@ -84,11 +88,12 @@ with no manual file editing beyond the secrets.
 ### Commands Run
 
 ```text
-python3 -m unittest discover -s tests                 -> Ran 77 tests, OK
+python3 -m unittest discover -s tests                 -> Ran 84 tests, OK (after nicknames)
 python3 -m unittest discover -s .claude/hooks/tests   -> Ran 20 tests, OK (1 skipped)
 bin/canvas-harness doctor (fresh clone)                 -> TODO lines with next steps, rc 1
 scratch user (fake secrets, roster, profile) doctor --offline -> All set, rc 0; sample plan previews
 personal-data scan of changed files                    -> clean (only the repo's own GitHub URL in a sprint record)
+scratch roster: which AP / ap physics / physics      -> @ap / @ap / @phys (rc 0); 'phys class' -> maybe @phys (rc 1); overlapping 'physics' roster -> rejected (rc 2)
 ```
 
 ### Results
@@ -99,6 +104,7 @@ personal-data scan of changed files                    -> clean (only the repo's
 ## Decisions
 
 - [ADR-0002](../decisions/ADR-0002-root-secrets-guided-setup-delete-guard.md)
+- [ADR-0003](../decisions/ADR-0003-course-nicknames.md)
 
 ## Dependency Changes
 
@@ -118,7 +124,7 @@ personal-data scan of changed files                    -> clean (only the repo's
 Guided /setup, doctor, root secrets file and delete guard built; offline-verified.
 
 ### Current State
-ready_for_review; committed 89d167b and pushed to origin/main.
+ready_for_review; nicknames added and pushed to origin/main.
 
 ### Next Action
 Live run: fresh clone in a new folder, open Claude Code there, follow /setup with a real token.

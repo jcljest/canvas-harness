@@ -41,7 +41,7 @@ plan.json  ->  preview  ->  approve (you)  ->  apply  ->  verify
 | file | what it holds | written by |
 |---|---|---|
 | `.env` (repo root) | `CANVAS_BASE_URL`, `CANVAS_API_TOKEN`, `CANVAS_COURSE_IDS` | **you only**, from `.env.example` |
-| `local/courses.json` | short names (`@chem`), Canvas ids, exact titles, your local project folders | `/setup` |
+| `local/courses.json` | short names (`@chem`), what you call each class (nicknames), Canvas ids, exact titles, your local project folders | `/setup` |
 | `local/profile.json` | timezone, PDF naming, default upload folder | `/setup` |
 | `local/canvas-config.json` | your switches (below) | **you only** |
 | `local/plans/`, `local/uploads/<alias>/` | plan files, files waiting to upload | you and Claude |
@@ -100,6 +100,7 @@ bin/canvas-harness doctor                 # setup checklist: what's done, what's
 bin/canvas-harness check                  # test the connection (never prints the token)
 bin/canvas-harness discover               # list courses you teach, with ids
 bin/canvas-harness roster                 # check local/courses.json against Canvas
+bin/canvas-harness which "AP Physics"     # which course a name or nickname means
 bin/canvas-harness config                 # show your switches
 bin/canvas-harness preview|approve|apply <plan>
 bin/canvas-harness uploads                # files waiting in local/uploads/
