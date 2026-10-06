@@ -1,0 +1,21 @@
+{
+  "title": "EXAMPLE: lab assignment (sample, do not apply)",
+  "steps": [
+    {
+      "course": "@chem",
+      "method": "POST",
+      "path": "assignments",
+      "note": "Create the lab assignment; `published` comes from auto_publish",
+      "body": {
+        "assignment": {
+          "name": "Lab: Reaction Rates",
+          "points_possible": 20,
+          "grading_type": "points",
+          "submission_types": ["online_upload"],
+          "due_at": "2030-10-09T23:59:00-05:00"
+        }
+      },
+      "files": {"assignment.description": "description.html"}
+    }
+  ]
+}

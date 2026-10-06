@@ -1,0 +1,11 @@
+# Everything personal: secrets, profile, roster, switches, plans, uploads
+/local/
+
+__pycache__/
+*.pyc
+.DS_Store
+
+# Plan review artifacts, wherever a plan lives
+*.preview.html
+*.approved
+*.result.json

@@ -1,0 +1,16 @@
+{
+  "courses": [
+    {
+      "alias": "chem",
+      "id": 1001,
+      "name": "Chemistry 101 Fall",
+      "local_project": "~/Projects/chemistry",
+      "pdf_prefix": "CHEM"
+    },
+    {
+      "alias": "bio",
+      "id": 1002,
+      "name": "Biology 101 Fall"
+    }
+  ]
+}

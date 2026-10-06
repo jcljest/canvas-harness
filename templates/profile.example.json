@@ -1,0 +1,7 @@
+{
+  "timezone": "America/Chicago",
+  "projects_root": "~",
+  "default_upload_folder": "Uploads",
+  "answer_key_label": "ANS",
+  "answer_key_words": ["ans", "answer", "answers", "key", "keys", "solution", "solutions", "soln", "sol"]
+}

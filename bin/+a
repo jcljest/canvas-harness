@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# +a — add or replace a variable in your canvas-export secrets file without
+# the value ever appearing on screen, in shell history, or on argv.
+#
+#   +a NAME        prompt (hidden) for NAME's value and save it
+#   +a             prompt for the name too
+#   +a -l          list saved variable NAMES (never values)
+#   +a -d NAME     remove NAME
+#
+# File: <local>/.env, where <local> is $CANVAS_EXPORT_LOCAL or local/ in this repo.
+set -euo pipefail
+umask 077
+
+# Resolve this script through symlinks (e.g. ~/.local/bin/+a -> repo/bin/+a).
+src="${BASH_SOURCE[0]}"
+while [ -L "$src" ]; do
+  dir="$(cd -P "$(dirname "$src")" && pwd)"
+  src="$(readlink "$src")"
+  case "$src" in /*) ;; *) src="$dir/$src" ;; esac
+done
+repo="$(cd -P "$(dirname "$src")/.." && pwd)"
+localdir="${CANVAS_EXPORT_LOCAL:-$repo/local}"
+mkdir -p "$localdir"
+file="$localdir/.env"
+
+valid_name() { [[ "$1" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; }
+
+touch "$file"
+chmod 600 "$file"
+
+remove_key() {
+  local tmp
+  tmp="$(mktemp "${file}.XXXXXX")"
+  grep -v -E "^(export[[:space:]]+)?$1=" "$file" > "$tmp" || true
+  chmod 600 "$tmp"
+  mv "$tmp" "$file"
+}
+
+case "${1:-}" in
+  -h|--help)
+    sed -n '2,10p' "$src" | sed 's/^# \{0,1\}//'
+    exit 0
+    ;;
+  -l|--list)
+    echo "Variables in $file:"
+    sed -n -E 's/^(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)=.*/  \2/p' "$file"
+    exit 0
+    ;;
+  -d|--delete)
+    name="${2:?usage: +a -d NAME}"
+    valid_name "$name" || { echo "+a: invalid name: $name" >&2; exit 2; }
+    remove_key "$name"
+    echo "Removed $name from $file"
+    exit 0
+    ;;
+esac
+
+name="${1:-}"
+if [ -z "$name" ]; then
+  read -r -p "Variable name: " name </dev/tty
+fi
+if [[ "$name" == *=* ]]; then
+  echo "+a: pass only the NAME; the value is prompted for so it stays out of shell history." >&2
+  exit 2
+fi
+valid_name "$name" || { echo "+a: invalid name: $name" >&2; exit 2; }
+
+read -r -s -p "Value for $name (hidden): " value </dev/tty
+echo
+if [ -z "$value" ]; then
+  echo "+a: empty value, nothing saved." >&2
+  exit 1
+fi
+
+remove_key "$name"
+printf '%s=%s\n' "$name" "$value" >> "$file"
+unset value
+echo "Saved $name to $file (value hidden)."

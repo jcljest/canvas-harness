@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Resolve through symlinks so ~/.local/bin/canvas-export finds the repo.
+src="${BASH_SOURCE[0]}"
+while [ -L "$src" ]; do
+  dir="$(cd -P "$(dirname "$src")" && pwd)"
+  src="$(readlink "$src")"
+  case "$src" in /*) ;; *) src="$dir/$src" ;; esac
+done
+repo="$(cd -P "$(dirname "$src")/.." && pwd)"
+PYTHONPATH="$repo${PYTHONPATH:+:$PYTHONPATH}" exec /usr/bin/env python3 -m canvas_export "$@"
