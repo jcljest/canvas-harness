@@ -118,7 +118,7 @@ personal-data scan of changed files                    -> clean (only the repo's
 Guided /setup, doctor, root secrets file and delete guard built; offline-verified.
 
 ### Current State
-ready_for_review; uncommitted on main.
+ready_for_review; committed 89d167b and pushed to origin/main.
 
 ### Next Action
-Commit and push (owner approval), then a live run: fresh clone in a new folder, open Claude Code there, follow /setup with a real token.
+Live run: fresh clone in a new folder, open Claude Code there, follow /setup with a real token.
