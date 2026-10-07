@@ -71,6 +71,10 @@ The command is `bin/canvas-harness` from the repo root (or `canvas-harness` if
   preview warns if an offset doesn't match. If the user gives only a date, ask
   for the time, or use 11:59 PM and say so.
 - **HTML bodies:** keep them in separate files referenced from `files`.
+- **New Quizzes:** add `"api": "quiz"` to a step to send it to
+  `/api/quiz/v1/courses/<id>/<path>` (e.g. `quizzes`, `quizzes/{{1.id}}/items`).
+  Updates there use `PATCH`. Classic quizzes stay on the default API.
+  `auto_publish` does not apply; a New Quiz is published through its assignment.
 - **Referring to earlier steps:** use `"content_id": "{{1.id}}"`.
 
 ## Files and PDFs

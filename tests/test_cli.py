@@ -91,6 +91,17 @@ class Scope(unittest.TestCase):
             with self.assertRaises(lc.ScopeError, msg=f"{m} {p}"):
                 lc.check_scope(m, p, CFG["course_ids"])
 
+    def test_new_quizzes_api(self):
+        self.assertEqual(self.norm("/api/quiz/v1/courses/111/quizzes"), "/api/quiz/v1/courses/111/quizzes")
+        self.assertEqual(self.norm("https://school.instructure.com/api/quiz/v1/courses/111/quizzes/5/items"),
+                         "/api/quiz/v1/courses/111/quizzes/5/items")
+        for m in ("GET", "POST", "PATCH", "DELETE"):
+            lc.check_scope(m, "/api/quiz/v1/courses/111/quizzes/5/items", CFG["course_ids"])
+        for m, p in (("POST", "/api/quiz/v1/courses/333/quizzes"), ("GET", "/api/quiz/v1/quizzes"),
+                     ("GET", "/api/quiz/v2/courses/111/quizzes")):
+            with self.assertRaises(lc.ScopeError, msg=f"{m} {p}"):
+                lc.check_scope(m, self.norm(p), CFG["course_ids"])
+
     def test_read_only_self(self):
         lc.check_scope("GET", "/api/v1/users/self", CFG["course_ids"])
         lc.check_scope("GET", "/api/v1/courses?enrollment_type=teacher", CFG["course_ids"])
@@ -117,6 +128,10 @@ class Roster(unittest.TestCase):
         self.assertEqual(lc.expand_alias("courses/1/x", self.ROSTER), "courses/1/x")
         with self.assertRaises(lc.ScopeError):
             lc.expand_alias("@nope/pages", self.ROSTER)
+        self.assertEqual(lc.expand_alias("/api/quiz/v1/@chem/quizzes", self.ROSTER),
+                         "/api/quiz/v1/courses/1001/quizzes")
+        self.assertEqual(lc.expand_alias("api/quiz/v1/@chem", self.ROSTER), "/api/quiz/v1/courses/1001")
+        self.assertIn("Chemistry 101", lc.describe_target("/api/quiz/v1/courses/1001/quizzes", self.ROSTER))
 
     def test_describe_target(self):
         self.assertIn("Chemistry 101", lc.describe_target("/api/v1/courses/1001/assignments", self.ROSTER))

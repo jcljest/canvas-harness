@@ -119,6 +119,7 @@ bin/canvas-harness preview|approve|apply <plan>
 bin/canvas-harness uploads                # files waiting in local/uploads/
 bin/canvas-harness pdf <file.html> --course @alias [--pages N]   # needs Chrome/Chromium
 bin/canvas-harness get @chem/assignments --all
+bin/canvas-harness get /api/quiz/v1/@chem/quizzes   # New Quizzes API (same course allowlist)
 ```
 
 ## Requirements

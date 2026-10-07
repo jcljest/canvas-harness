@@ -5,8 +5,8 @@ secrets file in local/ written by `bin/+a` (or from the process environment). Th
 only ever used inside this process: it is never printed, and any error text is
 redacted before it is shown.
 
-Scope rule: every request must target /api/v1/courses/<id>/... for an id in
-CANVAS_COURSE_IDS. The only exceptions are a few read-only GETs about the
+Scope rule: every request must target /api/v1/courses/<id>/... (or the New
+Quizzes API, /api/quiz/v1/courses/<id>/...) for an id in CANVAS_COURSE_IDS. The only exceptions are a few read-only GETs about the
 token's own user and the list of their own courses (see READ_ONLY_GLOBAL).
 """
 
@@ -26,8 +26,10 @@ from .settings import SetupError, load_roster
 PROG = "canvas-harness"
 SETUP_HINT = "First time? Open this repo in Claude Code and type /setup."
 REQUIRED = ("CANVAS_BASE_URL", "CANVAS_API_TOKEN", "CANVAS_COURSE_IDS")
-WRITE_METHODS = {"POST", "PUT", "DELETE"}
-COURSE_PATH = re.compile(r"^/api/v1/courses/(\d+)(/.*)?$")
+WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+API_PREFIXES = ("/api/v1/", "/api/quiz/v1/")  # classic REST API, New Quizzes API
+QUIZ_PREFIX = "/api/quiz/v1/"
+COURSE_PATH = re.compile(r"^/api/(?:v1|quiz/v1)/courses/(\d+)(/.*)?$")
 READ_ONLY_GLOBAL = re.compile(r"^/api/v1/(users/self(/profile)?|courses)$")
 
 
@@ -88,7 +90,11 @@ def load_config(path=None, environ=None, require_courses=True):
 
 
 def expand_alias(target, roster):
-    """'@chem/assignments' -> 'courses/1001/assignments'. Other targets pass through."""
+    """'@chem/assignments' -> 'courses/1001/assignments';
+    '/api/quiz/v1/@chem/quizzes' -> '/api/quiz/v1/courses/1001/quizzes'. Other targets pass through."""
+    quiz = QUIZ_PREFIX.lstrip("/")
+    if target.lstrip("/").startswith(quiz + "@"):
+        return QUIZ_PREFIX + expand_alias(target.lstrip("/")[len(quiz):], roster)
     if not target.startswith("@"):
         return target
     alias, _, rest = target[1:].partition("/")
@@ -118,7 +124,7 @@ def normalize_path(target, base):
     path = parsed.path
     if not path.startswith("/"):
         path = "/" + path
-    if not path.startswith("/api/v1/"):
+    if not path.startswith(API_PREFIXES):
         path = "/api/v1" + path
     path = re.sub(r"/{2,}", "/", path)
     if "/../" in path + "/" or "/./" in path + "/":
@@ -400,7 +406,7 @@ def _main(argv=None):
     pdf.add_argument("--name", help="output file name (one HTML file only)")
     pdf.add_argument("--pages", type=int, help="expected page count; fail and write nothing on mismatch")
     pdf.add_argument("--overwrite", action="store_true", help="replace an existing landing-folder file")
-    for m in ("get", "post", "put", "delete"):
+    for m in ("get", "post", "put", "patch", "delete"):
         p = sub.add_parser(m, help=f"{m.upper()} a course-scoped path, e.g. courses/123/assignments")
         p.add_argument("path")
         p.add_argument("-q", "--query", action="append", metavar="K=V", help="query param (repeatable)")

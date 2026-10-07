@@ -23,6 +23,10 @@ A plan is a JSON file that says exactly what to send to Canvas:
       ]
     }
 
+A request step may add "api": "quiz" to go to the New Quizzes API
+(/api/quiz/v1/courses/<id>/<path>, e.g. "quizzes" or "quizzes/{{1.id}}/items")
+instead of /api/v1. auto_publish does not touch those steps.
+
 `files` fills a dotted key in `body` with the contents of a file (relative to
 the plan). "{{N.field}}" is replaced at apply time with `field` from step N's
 response (1-based): a string that is exactly a placeholder becomes the raw value
@@ -65,7 +69,7 @@ from pathlib import Path
 from . import settings as st
 from .settings import SetupError
 
-METHODS = {"POST", "PUT", "DELETE"}
+METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 PLACEHOLDER = re.compile(r"^\{\{(\d+)\.([A-Za-z0-9_]+)\}\}$")
 INLINE = re.compile(r"\{\{(\d+)\.([A-Za-z0-9_]+)\}\}")
 UPLOAD_EXTS = {".pdf", ".docx", ".doc", ".pptx", ".xlsx", ".png", ".jpg", ".jpeg", ".gif", ".txt", ".csv"}
@@ -78,6 +82,8 @@ HTML_KEYS = ("description", "body", "message")
 # POST path -> key holding the new item's fields (None = top level of the body)
 PUBLISHABLE = {"assignments": "assignment", "pages": "wiki_page", "quizzes": "quiz", "discussion_topics": None}
 PUBLISHED_WARNING = "will be PUBLISHED (visible to students)"
+# step "api" -> URL prefix before /courses/<id>/ ("quiz" = New Quizzes API)
+APIS = {"v1": "/api/v1", "quiz": "/api/quiz/v1"}
 
 
 class PlanError(Exception):
@@ -158,6 +164,9 @@ def load_plan(path, roster, uploads_root=None, settings=None):
         rel = str(step.get("path", "")).strip("/")
         if not rel or rel.startswith(("courses", "api", "http")) or ".." in rel.split("/"):
             raise PlanError(f"{where}: path must be relative to the course, e.g. 'assignments'")
+        api = str(step.get("api", "v1"))
+        if api not in APIS:
+            raise PlanError(f"{where}: api must be one of {sorted(APIS)}")
         body = json.loads(json.dumps(step.get("body") or {}))
         for dotted, fname in (step.get("files") or {}).items():
             fpath = (path.parent / fname).resolve()
@@ -165,13 +174,16 @@ def load_plan(path, roster, uploads_root=None, settings=None):
                 _set_dotted(body, dotted, fpath.read_text())
             except OSError as e:
                 raise PlanError(f"{where}: cannot read {fname}: {e}")
-        _apply_auto_publish(method, rel, body, settings["auto_publish"])
+        if api == "v1":  # New Quizzes have no `published` field
+            _apply_auto_publish(method, rel, body, settings["auto_publish"])
         for m in list(_placeholders(body)) + list(INLINE.finditer(rel)):
             if int(m.group(1)) >= n:
                 raise PlanError(f"{where}: {m.group(0)} must refer to an earlier step")
         course = roster[alias[1:]]
         steps.append({"n": n, "kind": "request", "course": alias, "course_id": course["id"], "course_name": course["name"],
                       "method": method, "path": rel, "note": step.get("note", ""), "body": body})
+        if api != "v1":  # only stored when set, so existing approvals keep their digest
+            steps[-1]["api"] = api
     resolved = {"title": plan.get("title", path.stem), "steps": steps}
     digest = hashlib.sha256(json.dumps(resolved, sort_keys=True).encode()).hexdigest()
     return resolved, digest
@@ -318,7 +330,8 @@ def text_summary(plan, digest):
             continue
         inner = _inner(s["body"])
         label = inner.get("name") or inner.get("title") or s["note"] or ""
-        lines.append(f"  {s['n']}. {s['method']} {s['course']} ({s['course_name']}) /{s['path']}  {label}")
+        api = " [New Quizzes]" if s.get("api") == "quiz" else ""
+        lines.append(f"  {s['n']}. {s['method']} {s['course']} ({s['course_name']}) /{s['path']}{api}  {label}")
         for k in ("points_possible", "due_at", "published"):
             if k in inner:
                 lines.append(f"       {k}: {_fmt(k, inner[k])}")
@@ -342,7 +355,7 @@ def render_preview(plan, digest, base_url, approval=None):
             f"<h4>{e(k)} (as students will see it)</h4>"
             f"<iframe sandbox srcdoc=\"{e(inner[k], quote=True)}\"></iframe>"
             for k in HTML_KEYS if isinstance(inner.get(k), str) and inner[k].strip())
-        url = f"{base_url}/api/v1/courses/{s['course_id']}/{s['path']}"
+        url = f"{base_url}{APIS[s.get('api', 'v1')]}/courses/{s['course_id']}/{s['path']}"
         cards.append(f"""
 <section class="card">
   <div class="course">{e(s['course_name'])} <span class="alias">{e(s['course'])} · id {s['course_id']}</span></div>
@@ -463,7 +476,8 @@ def apply(plan_path, roster, send, describe=print, upload=None, uploads_root=Non
             body = substitute(s["body"], results)
             rel = substitute(s["path"], results)
             describe(f"step {s['n']}: {s['method']} {s['course']} = {s['course_name']} /{rel}")
-            resp = send(s["method"], f"courses/{s['course_id']}/{rel}", body) or {}
+            prefix = f"{APIS[s['api']]}/" if s.get("api") else ""
+            resp = send(s["method"], f"{prefix}courses/{s['course_id']}/{rel}", body) or {}
             results[s["n"]] = resp if isinstance(resp, dict) else {}
             log.append({"step": s["n"], "ok": True, "id": results[s["n"]].get("id"),
                         "html_url": results[s["n"]].get("html_url")})

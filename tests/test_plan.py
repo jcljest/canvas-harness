@@ -119,6 +119,26 @@ class Apply(unittest.TestCase):
             lp.apply(p, ROSTER, send, describe=lambda _: None)
         self.assertEqual(calls, [])
 
+    def test_new_quizzes_steps(self):
+        quiz = {"course": "@chem", "method": "POST", "path": "quizzes", "api": "quiz",
+                "body": {"quiz": {"title": "Unit 3 check"}}}
+        item = {"course": "@chem", "method": "POST", "path": "quizzes/{{1.id}}/items", "api": "quiz",
+                "body": {"item": {"entry_type": "Item"}}}
+        p = make_plan([quiz, item, MODULE_ITEM])
+        with mock.patch.object(st, "load_switches", return_value={**st.DEFAULT_SWITCHES, "auto_publish": True}):
+            plan, _ = lp.load_plan(p, ROSTER)
+        self.assertNotIn("published", plan["steps"][0]["body"]["quiz"])
+        self.assertNotIn("api", plan["steps"][2])
+        self.assertIn("/api/quiz/v1/courses/1001/quizzes", lp.render_preview(plan, "0" * 64, "https://x.com"))
+        approve_directly(p)
+        calls, send = self.fake_send()
+        lp.apply(p, ROSTER, send, describe=lambda _: None)
+        self.assertEqual([c[1] for c in calls], ["/api/quiz/v1/courses/1001/quizzes",
+                                                 "/api/quiz/v1/courses/1001/quizzes/101/items",
+                                                 "courses/1001/modules/55/items"])
+        with self.assertRaisesRegex(lp.PlanError, "api must be"):
+            lp.load_plan(make_plan([{**quiz, "api": "lti"}]), ROSTER)
+
     def test_refuses_changed_plan(self):
         p = make_plan([ASSIGN], {"lab3.html": "x"})
         approve_directly(p)
