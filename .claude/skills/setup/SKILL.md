@@ -51,16 +51,21 @@ Run `touch /tmp/canvas-harness-hook-probe.approved`.
 If doctor shows TODO for the secrets file, `CANVAS_BASE_URL` or `CANVAS_API_TOKEN`,
 explain:
 
-1. In their own terminal, from this folder: `cp .env.example .env`, then
-   `chmod 600 .env`.
-2. Open the `.env` file in their editor and fill in:
+1. Create the file. In VS Code (most teachers): click the **New File** icon
+   in the left sidebar and name it `.env` (with the dot). Or, in their own
+   terminal: `cp .env.example .env`. You can't create it for them.
+2. In the `.env` file, fill in (copy the lines from `.env.example`):
    - `CANVAS_BASE_URL`: the address they log in to Canvas at, like
      `https://theirschool.instructure.com`.
    - `CANVAS_API_TOKEN`: in Canvas, go to **Account → Settings → + New Access
      Token**. Purpose: "canvas-harness". An expiry date at the end of the term is
      a good habit. Copy the token into the file, never into this chat.
    - Leave `CANVAS_COURSE_IDS` empty for now.
-3. Save, then say "done".
+3. Save (⌘S), then say "done".
+
+If doctor warns about the file's permissions, ask them to open a second
+terminal (**Terminal → New Terminal**) and run `chmod 600 .env`, so only they
+can read it. You can't run that for them.
 
 `bin/+a NAME` (hidden prompt, in their own terminal) works too, if they prefer.
 
@@ -147,13 +152,16 @@ Write `local/profile.json` with only the keys from
 
 ## 7. Switches (explain only)
 
-Explain the three switches and their safe defaults (see README → Switches):
-`auto_approve` false, `auto_preview` true, `auto_publish` false. No file is
-needed for the defaults. If they want different values, they run this in their
-own terminal and then edit the file:
+Explain the three switches (see README → Switches). The repo ships them all
+on in `canvas-config.json` at the repo root: `auto_approve` (plans are sent
+without a typed `approve`; flagged items such as deletes or answer-key uploads
+are reported afterwards as alerts), `auto_preview`, `auto_publish` (new items are
+created published). No file is needed to use them. If they want any switch
+different, they create `local/canvas-config.json` in their own terminal with
+only the keys to change, for example:
 
 ```
-mkdir -p local && cp templates/canvas-config.example.json local/canvas-config.json
+mkdir -p local && echo '{"auto_approve": false}' > local/canvas-config.json
 ```
 
 You can't create or edit that file, by design. Confirm the result with

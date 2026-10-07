@@ -3,6 +3,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -200,6 +201,37 @@ class Settings(unittest.TestCase):
         for bad in ({"auto_publish": "yes"}, {"auto_approve": "true"}, {"auto_approve": 1}, {"auto_aprove": True}, [], "{not json"):
             with self.assertRaises(st.SetupError, msg=repr(bad)):
                 st.load_switches(self.write(bad))
+
+
+class SwitchLayers(unittest.TestCase):
+    """Code defaults <- shipped repo-root file <- local file."""
+
+    def layered(self, shipped=None, local=None):
+        d = Path(tempfile.mkdtemp())
+        s, l = d / "shipped.json", d / "local.json"
+        if shipped is not None:
+            s.write_text(json.dumps(shipped))
+        if local is not None:
+            l.write_text(json.dumps(local))
+        with mock.patch.object(st, "shipped_config_path", return_value=s), \
+             mock.patch.object(st, "config_path", return_value=l):
+            return st.load_switches()
+
+    def test_no_files_is_code_defaults(self):
+        self.assertEqual(self.layered(), st.DEFAULT_SWITCHES)
+
+    def test_shipped_file_applies(self):
+        on = {"auto_approve": True, "auto_preview": True, "auto_publish": True}
+        self.assertEqual(self.layered(shipped=on), on)
+
+    def test_local_overrides_only_its_keys(self):
+        self.assertEqual(self.layered(shipped={"auto_approve": True, "auto_publish": True},
+                                      local={"auto_publish": False}),
+                         {"auto_approve": True, "auto_preview": True, "auto_publish": False})
+
+    def test_bad_shipped_file_fails_closed(self):
+        with self.assertRaisesRegex(st.SetupError, "shipped.json"):
+            self.layered(shipped={"auto_approve": "yes"}, local={"auto_approve": False})
 
 
 class AutoApprove(unittest.TestCase):

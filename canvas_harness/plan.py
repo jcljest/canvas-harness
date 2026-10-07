@@ -42,8 +42,9 @@ step's HTML can link the file:
 fully resolved plan (including file contents) in `<plan>.approved`. `apply`
 refuses if that hash no longer matches, or if the plan was already applied.
 
-local/canvas-config.json (user-edited; missing = safe defaults) holds three switches:
-    {"auto_approve": false, "auto_preview": true, "auto_publish": false}
+Three switches, layered: safe code defaults {"auto_approve": false,
+"auto_preview": true, "auto_publish": false} <- the shipped canvas-config.json at
+the repo root <- the user's local/canvas-config.json (see settings.load_switches).
 auto_approve lets `apply` approve any plan itself, with no check first. Warnings
 (every one except "will be PUBLISHED") don't block it; they are written
 afterwards as alerts: printed after the run and saved under "alerts" in

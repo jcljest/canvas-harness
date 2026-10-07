@@ -12,3 +12,9 @@ __pycache__/
 *.preview.html
 *.approved
 *.result.json
+
+# Presentation decks (HTML review copies and exported .pptx); kept local
+/presentation/
+
+# Claude Code session state (ops.py bind)
+/.claude/runtime/

@@ -1,7 +1,7 @@
 ---
 module: harness
 health: green
-updated: 2026-10-06
+updated: 2026-10-07
 ---
 
 # harness
@@ -28,7 +28,7 @@ The whole canvas-harness product: CLI, plan workflow, and the shipped Claude Cod
 - `profile.json` keys: timezone, projects_root, default_upload_folder, answer_key_label, answer_key_words.
 - `courses.json`: `{"courses": [{alias, id, name, nicknames?, local_project?, pdf_prefix?}]}`. Every name (alias, nickname, title; compared ignoring case, spaces and punctuation) must belong to one course only.
 - `canvas-harness which NAME`: exit 0 with the one matching course, exit 1 with candidates.
-- `canvas-config.json`: auto_approve, auto_preview, auto_publish (defaults false/true/false).
+- Switches auto_approve, auto_preview, auto_publish: code fallback false/true/false <- shipped root `canvas-config.json` (all true) <- `local/canvas-config.json` (ADR-0005).
 - `$CANVAS_HARNESS_ENV` overrides the secrets file, `$CANVAS_HARNESS_LOCAL` the `local/` folder, `$CANVAS_HARNESS_CHROME` the browser.
 
 ## Invariants
@@ -63,6 +63,7 @@ Reason: Stage 1 scaffold.
 
 - 2026-10-06-harness-scaffold
 - 2026-10-06-harness-setup
+- 2026-10-07-harness-shipped-switch-defaults
 
 ## Next Milestone
 

@@ -6,11 +6,12 @@ personal sits in one gitignored folder, `local/` (override with $CANVAS_HARNESS_
 
     local/profile.json         timezone, naming conventions (written by /setup)
     local/courses.json         course roster: alias -> id, exact title, project folder
-    local/canvas-config.json   switches; only the user edits this file
+    local/canvas-config.json   the user's switches; override the shipped ones key by key
     local/plans/               plan files
     local/uploads/<alias>/     files waiting to be uploaded
 
-Code never hardcodes a person, school, course or path; it reads these files.
+The repo ships recommended switches in a tracked canvas-config.json at the
+repo root (edited only by the maintainer). Code never hardcodes a person, school, course or path; it reads these files.
 """
 
 import json
@@ -54,6 +55,15 @@ def config_path():
     return local_dir() / "canvas-config.json"
 
 
+def shipped_config_path():
+    return REPO / "canvas-config.json"
+
+
+def switch_sources():
+    """The switch files that exist, lowest priority first: shipped, then the user's."""
+    return [p for p in (shipped_config_path(), config_path()) if p.exists()]
+
+
 def uploads_root():
     return local_dir() / "uploads"
 
@@ -91,21 +101,28 @@ def load_profile(path=None):
     return prof
 
 
-def load_switches(path=None):
-    """canvas-config.json; a missing file means the safe defaults."""
-    path = Path(path or config_path())
-    if not path.exists():
-        return dict(DEFAULT_SWITCHES)
+def _read_switches(path):
     raw = _read_json(path, "switches file")
     if not isinstance(raw, dict):
-        raise SetupError(f"{path.name} must be a JSON object like {json.dumps(DEFAULT_SWITCHES)}")
+        raise SetupError(f"{path} must be a JSON object like {json.dumps(DEFAULT_SWITCHES)}")
     unknown = set(raw) - set(DEFAULT_SWITCHES)
     if unknown:
-        raise SetupError(f"{path.name}: unknown setting(s) {sorted(unknown)}; allowed: {sorted(DEFAULT_SWITCHES)}")
+        raise SetupError(f"{path}: unknown setting(s) {sorted(unknown)}; allowed: {sorted(DEFAULT_SWITCHES)}")
     for k, v in raw.items():
         if not isinstance(v, bool):
-            raise SetupError(f"{path.name}: {k} must be true or false, got {json.dumps(v)}")
-    return {**DEFAULT_SWITCHES, **raw}
+            raise SetupError(f"{path}: {k} must be true or false, got {json.dumps(v)}")
+    return raw
+
+
+def load_switches(path=None):
+    """Switches, layered: safe code defaults <- shipped canvas-config.json <- local/canvas-config.json.
+
+    With `path`, only that one file is layered over the code defaults. Missing files are skipped."""
+    out = dict(DEFAULT_SWITCHES)
+    for p in ([Path(path)] if path else switch_sources()):
+        if p.exists():
+            out.update(_read_switches(p))
+    return out
 
 
 def name_key(text):

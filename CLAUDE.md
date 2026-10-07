@@ -10,8 +10,9 @@
 - **Secrets:** never read, search, print or source `.env` (repo root), and never
   print environment variables. `.env.example` is the readable template. If a variable is missing, ask the user
   to run `bin/+a NAME` in their own terminal.
-- **User-only files:** never create, edit or work around `local/canvas-config.json`
-  or any `*.approved` file. Read switches with `bin/canvas-harness config`.
+- **User-only files:** never create, edit or work around `canvas-config.json`
+  (the shipped one at the repo root or the user's `local/` override) or any
+  `*.approved` file. Read switches with `bin/canvas-harness config`.
 - **Approval:** `approve` is typed by the user in their own terminal. Never
   approve on their behalf. If their `auto_approve` is on, `apply` approves
   every plan itself; flagged items are reported afterwards as alerts.

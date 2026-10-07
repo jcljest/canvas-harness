@@ -386,7 +386,7 @@ def _main(argv=None):
     pv.add_argument("plan")
     pv.add_argument("--no-open", action="store_true", help="don't open the preview in a browser")
     pv.add_argument("--open", action="store_true", help="open the preview even if auto_preview is false")
-    sub.add_parser("config", help="show your switches (auto_approve, auto_preview, auto_publish); only you edit that file")
+    sub.add_parser("config", help="show the switches in effect (auto_approve, auto_preview, auto_publish) and which files set them")
     wh = sub.add_parser("which", help="which course a name means, e.g. which \"AP Physics\" (uses aliases, nicknames, titles)")
     wh.add_argument("name", nargs="+", help="what you call the class; several words are joined")
     sub.add_parser("doctor", help="checklist of what is set up and what to do next (never prints secrets)").add_argument(
@@ -457,9 +457,8 @@ def _main(argv=None):
         return doctor.run(offline=args.offline)
     if args.cmd == "config":
         settings = st.load_switches()
-        cfg_path = st.config_path()
-        src = cfg_path if cfg_path.exists() else f"{cfg_path} (missing; safe defaults)"
-        print(f"file: {src}")
+        srcs = st.switch_sources()
+        print("files: " + (" <- ".join(map(str, srcs)) if srcs else "none (safe defaults)"))
         for k, v in settings.items():
             print(f"{k}: {json.dumps(v)}")
         return 0

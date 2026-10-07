@@ -11,7 +11,7 @@ Everything personal is gitignored: the secrets file at the repo root, and the `l
 |---|---|---|
 | `local/courses.json` | aliases, nicknames, Canvas ids, exact titles, project folders | `/setup` (Claude) |
 | `local/profile.json` | timezone, PDF naming, default upload folder | `/setup` (Claude) |
-| `local/canvas-config.json` | `auto_approve`, `auto_preview`, `auto_publish` | **the user only** |
+| `canvas-config.json` (repo root, shipped) and `local/canvas-config.json` (override) | `auto_approve`, `auto_preview`, `auto_publish` | **the maintainer / the user only** |
 | `.env` at the repo root | school URL, token, allowed course ids | **the user only** |
 
 The command is `bin/canvas-harness` from the repo root (or `canvas-harness` if

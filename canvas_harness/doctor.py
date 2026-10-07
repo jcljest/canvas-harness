@@ -33,8 +33,8 @@ def run(offline=False, request=None, load_config=None, parse_secrets=None):
     names = set()
     if not secrets.exists():
         done = False
-        _line(TODO, "secrets file", f"copy .env.example to {secrets.name} in {secrets.parent} and fill in "
-              "CANVAS_BASE_URL and CANVAS_API_TOKEN in your editor")
+        _line(TODO, "secrets file", f"create {secrets.name} in {secrets.parent} (VS Code: New File in the sidebar; "
+              "or copy .env.example) and fill in CANVAS_BASE_URL and CANVAS_API_TOKEN")
     else:
         names = {k for k, v in parse_secrets(secrets.read_text()).items() if v}
         mode = stat.S_IMODE(os.stat(secrets).st_mode)
@@ -102,7 +102,8 @@ def run(offline=False, request=None, load_config=None, parse_secrets=None):
         _line(TODO, "profile", "run /setup to set your timezone and naming conventions")
 
     sw = st.load_switches()
-    src = "" if st.config_path().exists() else " (no file; safe defaults)"
+    srcs = st.switch_sources()
+    src = f" (from {' <- '.join(x.name if x.parent == st.REPO else str(x) for x in srcs)})" if srcs else " (no file; safe defaults)"
     _line(OK, "switches", ", ".join(f"{k}={str(v).lower()}" for k, v in sw.items()) + src)
 
     try:

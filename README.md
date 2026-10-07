@@ -43,7 +43,7 @@ plan.json  ->  preview  ->  approve (you)  ->  apply  ->  verify
 | `.env` (repo root) | `CANVAS_BASE_URL`, `CANVAS_API_TOKEN`, `CANVAS_COURSE_IDS` | **you only**, from `.env.example` |
 | `local/courses.json` | short names (`@chem`), what you call each class (nicknames), Canvas ids, exact titles, your local project folders | `/setup` |
 | `local/profile.json` | timezone, PDF naming, default upload folder | `/setup` |
-| `local/canvas-config.json` | your switches (below) | **you only** |
+| `local/canvas-config.json` | optional: your own switches, overriding the shipped ones (below) | **you only** |
 | `local/plans/`, `local/uploads/<alias>/` | plan files, files waiting to upload | you and Claude |
 
 Instead of editing `.env` by hand, you can run `bin/+a NAME` in your terminal.
@@ -53,20 +53,33 @@ shell history. `bin/+a -l` lists names only.
 Set `CANVAS_HARNESS_ENV` to keep the secrets file elsewhere, and
 `CANVAS_HARNESS_LOCAL` to move the `local/` folder.
 
-## Switches (`local/canvas-config.json`)
+## Switches
+
+The repo ships recommended switches in `canvas-config.json` at the repo root:
 
 ```json
-{"auto_approve": false, "auto_preview": true, "auto_publish": false}
+{"auto_approve": true, "auto_preview": true, "auto_publish": true}
 ```
 
-| switch | `true` | `false` (default unless noted) |
+To change any of them for yourself, create `local/canvas-config.json` with just
+the keys you want different. It overrides the shipped file key by key and is
+never committed:
+
+```sh
+mkdir -p local && echo '{"auto_approve": false}' > local/canvas-config.json
+```
+
+If neither file exists, the safe fallbacks apply: `auto_approve` false,
+`auto_preview` true, `auto_publish` false.
+
+| switch | `true` | `false` |
 |---|---|---|
-| `auto_approve` | `apply` approves **every** plan itself, with no check first. Anything that would have been flagged (deletes, past dates, answer-key filenames, overwrites, announcements that post immediately) is sent anyway and reported afterwards as an `ALERT` line and under `"alerts"` in `<plan>.result.json`. | You always type `approve`. |
-| `auto_preview` | The preview opens in your browser (default). | The preview file is written but not opened. |
+| `auto_approve` | `apply` approves **every** plan itself, with no check first. Anything that would have been flagged (deletes, past dates, answer-key filenames, overwrites, announcements that post immediately) is sent anyway and reported afterwards as an `ALERT` line and under `"alerts"` in `<plan>.result.json`. | You type `approve` for every plan. |
+| `auto_preview` | The preview opens in your browser. | The preview file is written but not opened. |
 | `auto_publish` | New assignments, pages, quizzes and discussions are created published. | They're created as unpublished drafts. |
 
 A plan that sets `published` itself keeps that value. Changing a switch
-cancels earlier approvals. `bin/canvas-harness config` shows the current values.
+cancels earlier approvals. `bin/canvas-harness config` shows the values in effect and which files set them.
 
 ## Safety
 
@@ -75,7 +88,7 @@ The project's `.claude/settings.json` turns on two hooks and some deny rules:
 - **Secret guard** (`.claude/hooks/block_env_read.py`): Claude can't read,
   search, copy or print your secrets file or environment variables.
 - **Approval guard** (`.claude/hooks/guard_approvals.py`): Claude can't edit
-  `canvas-config.json` or any `*.approved` stamp, so it can't approve its own
+  either `canvas-config.json` or any `*.approved` stamp, so it can't approve its own
   plans or switch on auto-approve.
 - **Delete guard** (`.claude/hooks/guard_deletes.py`): Claude must ask you
   before deleting anything (`rm`, `find -delete`, `git clean`, code that

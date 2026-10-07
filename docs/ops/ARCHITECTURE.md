@@ -18,6 +18,7 @@ plan -> preview -> approve (human) -> apply -> verify.
 | `.claude/` | shipped harness: settings; secret, approval and delete guards; `canvas-post` and `setup` skills |
 | secrets file at root (gitignored) | URL, token, course allowlist; user-written only |
 | `local/` (gitignored) | everything else personal; never committed |
+| `canvas-config.json` at root (tracked) | shipped recommended switches; maintainer-edited; `local/canvas-config.json` overrides key by key (ADR-0005) |
 | `templates/` | example user files with safe defaults |
 
 ## Boundaries
